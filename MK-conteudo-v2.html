@@ -78,6 +78,7 @@ main{margin-top:10px}
 /* ===== task card ===== */
 .task{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 14px 16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start}
 .task.done{opacity:.55}
+.task.pubtask{border-left:3px solid var(--marrom)}
 .task .check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--nude);margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff}
 .task .check:active{transform:scale(.9)}
 .task.done .check{background:var(--verde);border-color:var(--verde)}
@@ -530,7 +531,7 @@ function completeTask(id){
     if(!S.anuncios.find(a=>a.postId===post.id))
       S.anuncios.push({postId:post.id,criativo:post.tema,inicio:t.due,orcamento:'',msgs:'',agenda:'',custo:''});
     toast('Anúncio registrado ✓');
-  }else toast('Feito ✓');
+  }else{const msg={roteiro:'Roteiro pronto ✓ — agora é gravar (captação)',captacao:'Captação feita ✓ — agora é editar',edicao:'Edição pronta ✓ — agora é só confirmar a publicação',stories:'Stories do dia marcados ✓'};toast(msg[t.tipo]||'Feito ✓');}
   saveState();render();
 }
 function uncompleteTask(id){const t=S.tasks.find(x=>x.id===id);if(t){t.status='pendente';delete t.doneAt;saveState();render();}}
@@ -577,16 +578,21 @@ const TIPO_LABEL={roteiro:'Roteiro',captacao:'Captação',edicao:'Edição',publ
 function taskCard(t,flag){
   const post=S.posts.find(p=>p.id===t.postId);const due=parse(t.due);const done=t.status==='feito';
   const flagHtml=flag?`<span class="flag ${flag}">${flag==='atrasada'?'Atrasada':flag==='preparar'?'Preparar · '+DIAS[due.getDay()].slice(0,3):flag==='aval'?'Avaliar':'Hoje'}</span>`:'';
+  const isPub=(t.tipo==='publicacao');const isAval=(t.tipo==='avaliar');
   let extra='';
   if(t.tipo==='roteiro')extra=`<button class="btn ghost" onclick="openBriefing('${post.id}')">Briefing ClaudIA</button>`;
-  if(t.tipo==='avaliar')extra=`<button class="btn primary" onclick="openAvaliar('${post.id}','${t.id}')">Avaliar agora</button>`;
+  if(isAval)extra=`<button class="btn primary" onclick="openAvaliar('${post.id}','${t.id}')">Avaliar agora</button>`;
+  if(isPub)extra=done
+    ?`<button class="btn ghost" onclick="uncompleteTask('${t.id}')">Desfazer publicação</button>`
+    :`<button class="btn primary" onclick="completeTask('${t.id}')">✓ Confirmar publicação</button>`;
   let storiesHtml='';
   if(t.tipo==='stories'&&post&&post.stories)storiesHtml=`<div class="stories-chips">${post.stories.map(s=>`<span class="schip">${s}</span>`).join('')}</div>`;
-  const checkable=(t.tipo!=='avaliar');
-  return `<div class="task ${done?'done':''}">
-    <div class="check" ${checkable?`onclick="${done?'uncompleteTask':'completeTask'}('${t.id}')"`:`onclick="openAvaliar('${post.id}','${t.id}')"`}><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <div class="body"><div class="ttype">${TIPO_LABEL[t.tipo]} ${flagHtml}</div>
-      <div class="ttitle">${t.label}</div>
+  const noCheck=(isPub||isAval);
+  const checkHtml=noCheck?'':`<div class="check" onclick="${done?'uncompleteTask':'completeTask'}('${t.id}')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+  return `<div class="task ${done?'done':''} ${isPub?'pubtask':''}">
+    ${checkHtml}
+    <div class="body"><div class="ttype">${isPub?'IR AO AR':TIPO_LABEL[t.tipo]} ${flagHtml}</div>
+      <div class="ttitle">${isPub?'Publicar no Instagram e confirmar aqui':t.label}</div>
       <div class="tmeta"><span>📌 <b>${post?post.tema:''}</b></span></div>
       <div class="tmeta"><span>👤 ${t.resp}</span><span>📅 ${DIAS[due.getDay()]} ${fmtShort(due)}</span></div>
       ${storiesHtml}${extra?'<div class="actions">'+extra+'</div>':''}
