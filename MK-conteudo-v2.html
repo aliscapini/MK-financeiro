@@ -568,11 +568,14 @@ function renderHero(){
   document.getElementById('missionTxt').textContent=n===1?'tarefa para hoje':'tarefas para hoje';
 }
 function hojeTasks(){
-  const d=today();const fazer=[],atrasadas=[],preparar=[];
-  S.tasks.forEach(t=>{if(t.status==='feito'||!prevDone(t))return;const due=parse(t.due);
+  const d=today();const fazer=[],atrasadas=[],preparar=[],concluidas=[];
+  const td=iso(d);
+  S.tasks.forEach(t=>{
+    if(t.status==='feito'){if(t.doneAt===td)concluidas.push(t);return;}
+    if(!prevDone(t))return;const due=parse(t.due);
     if(due.getTime()===d.getTime())fazer.push(t);else if(due<d)atrasadas.push(t);else if(due<=addDays(d,3))preparar.push(t);});
   const by=(a,b)=>parse(a.due)-parse(b.due);
-  return {fazer:fazer.sort(by),atrasadas:atrasadas.sort(by),preparar:preparar.sort(by)};
+  return {fazer:fazer.sort(by),atrasadas:atrasadas.sort(by),preparar:preparar.sort(by),concluidas:concluidas.sort(by)};
 }
 const TIPO_LABEL={roteiro:'Roteiro',captacao:'Captação',edicao:'Edição',publicacao:'Publicar',anuncio:'Anúncio',stories:'Stories',avaliar:'Avaliar resultado'};
 function taskCard(t,flag){
@@ -581,7 +584,7 @@ function taskCard(t,flag){
   const isPub=(t.tipo==='publicacao');const isAval=(t.tipo==='avaliar');
   let extra='';
   if(t.tipo==='roteiro')extra=`<button class="btn ghost" onclick="openBriefing('${post.id}')">Briefing ClaudIA</button>`;
-  if(isAval)extra=`<button class="btn primary" onclick="openAvaliar('${post.id}','${t.id}')">Avaliar agora</button>`;
+  if(isAval)extra=done?`<button class="btn ghost" onclick="openAvaliar('${post.id}','${t.id}')">Ver / editar avaliação</button>`:`<button class="btn primary" onclick="openAvaliar('${post.id}','${t.id}')">Avaliar agora</button>`;
   if(isPub)extra=done
     ?`<button class="btn ghost" onclick="uncompleteTask('${t.id}')">Desfazer publicação</button>`
     :`<button class="btn primary" onclick="completeTask('${t.id}')">✓ Confirmar publicação</button>`;
@@ -599,11 +602,12 @@ function taskCard(t,flag){
     </div></div>`;
 }
 function renderHoje(){
-  const el=document.getElementById('v-hoje');const {fazer,atrasadas,preparar}=hojeTasks();let h='';
+  const el=document.getElementById('v-hoje');const {fazer,atrasadas,preparar,concluidas}=hojeTasks();let h='';
   if(atrasadas.length)h+=`<div class="section-title">Atrasadas</div>`+atrasadas.map(t=>taskCard(t,t.tipo==='avaliar'?'aval':'atrasada')).join('');
   h+=`<div class="section-title">Para fazer hoje</div>`;
   h+=fazer.length?fazer.map(t=>taskCard(t,t.tipo==='avaliar'?'aval':'hoje')).join(''):`<div class="empty"><div class="big">Tudo em dia ✨</div><div class="muted">Nada para fazer hoje. Veja o que preparar abaixo.</div></div>`;
   if(preparar.length)h+=`<div class="section-title">Preparar para os próximos dias</div>`+preparar.map(t=>taskCard(t,'preparar')).join('');
+  if(concluidas.length)h+=`<div class="section-title">Concluídas hoje</div><div class="muted" style="margin:-4px 2px 8px">Toque na bolinha verde (ou no botão Desfazer) para reverter.</div>`+concluidas.map(t=>taskCard(t,null)).join('');
   el.innerHTML=h;
 }
 function chainSteps(post){
