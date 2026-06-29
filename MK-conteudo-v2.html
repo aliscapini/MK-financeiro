@@ -554,6 +554,7 @@ function buildBriefing(post){
 /* ================= RENDER ================= */
 let CURVIEW='hoje';
 function go(v){CURVIEW=v;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.v===v));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));render();}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderResultados();renderPlano();}
 
 function renderHero(){
