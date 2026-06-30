@@ -258,7 +258,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4</b></div>
+  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.1</b></div>
 </div>
 </div>
 
@@ -754,21 +754,40 @@ function obsFor(p){
   const past=(S.history||[]).flatMap(h=>h.posts||[]).filter(x=>x.obs&&x.tema&&x.tema.split(' ')[0]===p.tema.split(' ')[0]);
   return past.map(x=>x.obs).join(' | ');
 }
-async function gerarRoteirosIA(){
-  if(MODE!=='online'||!supa){toast('Precisa estar Sincronizado (online) para usar a IA');return;}
-  if(!S.posts.length){toast('Gere uma semana primeiro');return;}
-  if(!confirm('Gerar os roteiros desta semana com IA agora? Há um pequeno custo por geração.'))return;
+function gerarRoteirosIA(){
+  if(MODE!=='online'||!supa){iaSheet('<b>Precisa estar Sincronizado</b><br>Conecte-se (bolinha verde) para usar a IA.',[['Fechar','closeModal()']]);return;}
+  if(!S.posts.length){iaSheet('Gere uma semana primeiro.',[['Fechar','closeModal()']]);return;}
+  iaSheet('Gerar os roteiros desta semana com IA agora?<br><span style="color:var(--ink-soft)">Tem um pequeno custo por geração (centavos).</span>',[['Gerar agora','runGerarRoteiros()','primary'],['Cancelar','closeModal()']]);
+}
+function iaSheet(html,buttons){
+  const sheet=document.getElementById('sheet');
+  const btns=buttons.map(b=>`<button class="btn ${b[2]==='primary'?'primary':''}" style="flex:1;padding:13px" onclick="${b[1]}">${b[0]}</button>`).join('');
+  sheet.innerHTML=`<div class="sheethead"><div><div class="muted" style="letter-spacing:.2em;text-transform:uppercase;font-size:10px;color:var(--nude)">Roteiros com IA</div><h3 style="font-size:20px">ClaudIA</h3></div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <p id="ia_msg" style="font-size:15px;line-height:1.5;margin:4px 2px 16px">${html}</p>
+    <div id="ia_btns" style="display:flex;gap:8px">${btns}</div>`;
+  openModal();
+}
+async function runGerarRoteiros(){
+  document.getElementById('ia_msg').innerHTML='✨ <b>IA escrevendo os roteiros…</b><br><span style="color:var(--ink-soft)">Pode levar alguns segundos. Não feche esta tela.</span>';
+  document.getElementById('ia_btns').innerHTML='';
+  setSync('saving','IA escrevendo…');
   const posts=S.posts.map(p=>({id:p.id,dia:DIAS[parse(p.date).getDay()],formato:p.formato,pilar:PILAR_NOME[p.pilar]||p.pilar,tema:p.tema,profissional:p.profissional,servico:p.servico,anuncio:p.anuncio,observacoes:obsFor(p)}));
-  setSync('saving','IA escrevendo…');toast('IA escrevendo os roteiros… aguarde');
   try{
     const {data:{session}}=await supa.auth.getSession();
-    if(!session){toast('Sessão expirada — entre de novo');return;}
+    if(!session){return iaResult('Sessão expirada. Saia e entre de novo.',false);}
     const r=await fetch(FUNC_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_KEY},body:JSON.stringify({posts})});
-    const j=await r.json().catch(()=>({error:'resposta inválida'}));
-    if(!r.ok||j.error){toast('Falha na IA: '+(j.error||('erro '+r.status)));setSync('ok','Sincronizado');return;}
+    const j=await r.json().catch(()=>({error:'resposta inválida do servidor'}));
+    if(!r.ok||j.error){return iaResult('Falha na IA:<br><span style="color:var(--ink-soft);font-size:13px">'+(j.error||('erro '+r.status))+(j.detail?('<br>'+String(j.detail).slice(0,300)):'')+'</span>',false);}
     let n=0;(j.roteiros||[]).forEach(rt=>{const p=S.posts.find(x=>x.id===rt.id);if(p){p.roteiro=rt.roteiro;n++;}});
-    saveState();render();toast(n?('Roteiros prontos ✓ ('+n+')'):'A IA não retornou roteiros');
-  }catch(e){toast('Erro ao chamar a IA');setSync('ok','Sincronizado');}
+    saveState();setSync('ok','Sincronizado');
+    if(n){closeModal();render();toast('Roteiros prontos ✓ ('+n+')');}
+    else iaResult('A IA respondeu, mas não veio nenhum roteiro. Tente de novo.',false);
+  }catch(e){iaResult('Não consegui falar com a IA. Verifique a conexão e tente de novo.',false);}
+}
+function iaResult(msg,ok){
+  setSync('ok','Sincronizado');
+  const m=document.getElementById('ia_msg');if(m)m.innerHTML=msg;
+  const b=document.getElementById('ia_btns');if(b)b.innerHTML=`<button class="btn primary" style="flex:1;padding:13px" onclick="closeModal()">Fechar</button>`;
 }
 function showRoteiro(postId){
   const post=S.posts.find(p=>p.id===postId);if(!post||!post.roteiro)return;
