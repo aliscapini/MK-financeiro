@@ -258,7 +258,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.1</b></div>
+  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.2</b></div>
 </div>
 </div>
 
@@ -294,7 +294,7 @@ const CHAIN=[
  {tipo:'roteiro',off:-3,resp:'Alison / ClaudIA',label:'Gerar roteiro com a ClaudIA'},
  {tipo:'captacao',off:-2,resp:'Ana Paula',label:'Gravar e fotografar o conteúdo'},
  {tipo:'edicao',off:-1,resp:'Jihad',label:'Editar o vídeo / arte'},
- {tipo:'publicacao',off:0,resp:'Camile',label:'Publicar no Instagram'},
+ {tipo:'publicacao',off:0,resp:'Ana Paula',label:'Publicar no Instagram'},
 ];
 const ORDER=['roteiro','captacao','edicao','publicacao','anuncio','stories','avaliar'];
 
@@ -362,7 +362,7 @@ function makePost(S,mon,wd,formato,pilar,tema,prof,servNome,anuncio,reason,rnd,a
  CHAIN.forEach(c=>S.tasks.push({id:uid(),postId:post.id,tipo:c.tipo,resp:c.resp,label:c.label,
    due:iso(addDays(date,c.off)),status:'pendente'}));
  if(anuncio)S.tasks.push({id:uid(),postId:post.id,tipo:'anuncio',resp:'Alison',label:'Subir o anúncio Meta',due:iso(date),status:'pendente'});
- S.tasks.push({id:uid(),postId:post.id,tipo:'stories',resp:'Camile',label:'Postar 2–3 stories do dia',due:iso(date),status:'pendente'});
+ S.tasks.push({id:uid(),postId:post.id,tipo:'stories',resp:'Ana Paula',label:'Postar 2–3 stories do dia',due:iso(date),status:'pendente'});
  return post;
 }
 
@@ -527,7 +527,7 @@ function completeTask(id){
   if(t.tipo==='publicacao'&&post){
     post.status='Publicado';markServiceUsed(post.servico);markProfAppeared(post.profissional);
     if(!S.tasks.find(x=>x.postId===post.id&&x.tipo==='avaliar'))
-      S.tasks.push({id:uid(),postId:post.id,tipo:'avaliar',resp:'Camile',label:'Avaliar resultado (7 dias depois)',due:iso(addDays(parse(post.date),7)),status:'pendente'});
+      S.tasks.push({id:uid(),postId:post.id,tipo:'avaliar',resp:'Ana Paula',label:'Avaliar resultado (7 dias depois)',due:iso(addDays(parse(post.date),7)),status:'pendente'});
     if(!S.metricas.find(m=>m.postId===post.id))
       S.metricas.push({postId:post.id,tema:post.tema,pub:post.date,pilar:post.pilar,alcance:'',msgs:'',agenda:'',salvos:''});
     toast('Publicado ✓ — em 7 dias o sistema lembra de avaliar');
@@ -645,7 +645,7 @@ function renderSemana(){
   const closable=weekClosable();
   h+=`<div class="weekcta ${closable?'':'locked'}">
     <h4>${closable?'Pronta para a próxima semana':'Próxima semana'}</h4>
-    <p>${closable?'Todos os posts foram publicados. Gere a próxima semana — o sistema usa a rotação, as avaliações e as observações que a Camile registrou.':'Publique todos os posts da semana para liberar o planejamento automático.'}</p>
+    <p>${closable?'Todos os posts foram publicados. Gere a próxima semana — o sistema usa a rotação, as avaliações e as observações registradas.':'Publique todos os posts da semana para liberar o planejamento automático.'}</p>
     <button onclick="${closable?'doGenerateNextWeek()':''}" ${closable?'':'disabled'}>Gerar próxima semana ✨</button></div>`;
   el.innerHTML=h;
 }
