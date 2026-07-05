@@ -258,7 +258,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.2</b></div>
+  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.4</b></div>
 </div>
 </div>
 
@@ -539,6 +539,25 @@ function completeTask(id){
   saveState();render();
 }
 function uncompleteTask(id){const t=S.tasks.find(x=>x.id===id);if(t){t.status='pendente';delete t.doneAt;saveState();render();}}
+function postToBanco(post){S.banco=S.banco||[];S.banco.unshift({prio:'ALTA',tema:post.tema,profissional:post.profissional,formato:post.formato,gancho:post.roteiro?'':'',pilar:post.pilar,status:'ideia'});if(S.banco.length>30)S.banco=S.banco.slice(0,30);}
+function removePost(postId){S.posts=S.posts.filter(p=>p.id!==postId);S.tasks=S.tasks.filter(t=>t.postId!==postId);}
+function naoFoiFeita(taskId){
+  const t=S.tasks.find(x=>x.id===taskId);if(!t)return;const post=S.posts.find(p=>p.id===t.postId);
+  iaSheet(`A tarefa <b>"${t.label}"</b> não foi feita.<br><span style="color:var(--ink-soft)">O que você quer fazer com o post <b>"${post?post.tema:''}"</b>?</span>`,
+    [['Adiar para outra semana',`taskFuturo('${taskId}')`,'primary'],['Descartar',`taskDescartar('${taskId}')`],['Cancelar','closeModal()']]);
+}
+function taskFuturo(taskId){
+  const t=S.tasks.find(x=>x.id===taskId);if(!t)return;const post=S.posts.find(p=>p.id===t.postId);
+  if(post){postToBanco(post);removePost(post.id);}
+  saveState();closeModal();render();toast('Adiado ✓ — o sistema recoloca este post quando você gerar uma próxima semana');
+}
+function taskDescartar(taskId){
+  const t=S.tasks.find(x=>x.id===taskId);if(!t)return;const post=S.posts.find(p=>p.id===t.postId);
+  iaSheet('Descartar só esta tarefa, ou o post todo?<br><span style="color:var(--ink-soft)">Se descartar só a tarefa, o post continua na semana sem essa etapa.</span>',
+    [['Só esta tarefa',`descartaTarefa('${taskId}')`],['O post todo',`descartaPost('${post?post.id:''}')`,'primary'],['Cancelar','closeModal()']]);
+}
+function descartaTarefa(taskId){S.tasks=S.tasks.filter(x=>x.id!==taskId);saveState();closeModal();render();toast('Tarefa descartada');}
+function descartaPost(postId){removePost(postId);saveState();closeModal();render();toast('Post descartado');}
 
 function weekClosable(){if(!S.posts.length)return false;return S.posts.every(p=>{const pub=S.tasks.find(t=>t.postId===p.id&&t.tipo==='publicacao');return pub&&pub.status==='feito';});}
 function doGenerateNextWeek(){generateNextWeek(S);saveState();go('semana');toast('Próxima semana planejada ✨');}
@@ -597,13 +616,16 @@ function taskCard(t,flag){
   if(t.tipo==='stories'&&post&&post.stories)storiesHtml=`<div class="stories-chips">${post.stories.map(s=>`<span class="schip">${s}</span>`).join('')}</div>`;
   const noCheck=(isPub||isAval);
   const checkHtml=noCheck?'':`<div class="check" onclick="${done?'uncompleteTask':'completeTask'}('${t.id}')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+  const canFail=(!done && (flag==='atrasada'||flag==='hoje') && t.tipo!=='avaliar');
+  const failBtn=canFail?`<button class="btn ghost" onclick="naoFoiFeita('${t.id}')">Não foi feita</button>`:'';
+  const actions=extra+failBtn;
   return `<div class="task ${done?'done':''} ${isPub?'pubtask':''}">
     ${checkHtml}
     <div class="body"><div class="ttype">${isPub?'IR AO AR':TIPO_LABEL[t.tipo]} ${flagHtml}</div>
       <div class="ttitle">${isPub?'Publicar no Instagram e confirmar aqui':t.label}</div>
       <div class="tmeta"><span>📌 <b>${post?post.tema:''}</b></span></div>
       <div class="tmeta"><span>👤 ${t.resp}</span><span>📅 ${DIAS[due.getDay()]} ${fmtShort(due)}</span></div>
-      ${storiesHtml}${extra?'<div class="actions">'+extra+'</div>':''}
+      ${storiesHtml}${actions?'<div class="actions">'+actions+'</div>':''}
     </div></div>`;
 }
 function renderHoje(){
