@@ -258,7 +258,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.4</b></div>
+  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.5</b></div>
 </div>
 </div>
 
@@ -875,13 +875,34 @@ document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal
 /* ---------- menu ---------- */
 document.getElementById('menuBtn').onclick=()=>{
   const sheet=document.getElementById('sheet');
+  const sheet2=sheet;
+  const localBtn = MODE==='online'
+    ? `<button class="btn" style="width:100%;padding:13px" onclick="logout()">Sair da conta</button>`
+    : `<button class="btn primary" style="width:100%;padding:13px" onclick="reconnect()">Entrar / Sincronizar</button>`;
   sheet.innerHTML=`<div class="sheethead"><h3>Opções</h3><button class="xbtn" onclick="closeModal()">×</button></div>
-    <button class="btn" style="width:100%;padding:13px;margin-bottom:9px" onclick="reseed()">Recomeçar plano do zero</button>
-    ${MODE==='online'?`<button class="btn" style="width:100%;padding:13px" onclick="logout()">Sair da conta</button>`:''}
-    <p class="muted" style="margin-top:12px;text-align:center">${MODE==='online'?'Sincronizado com o Supabase.':'Modo local — sem sincronização.'}</p>`;
+    ${localBtn}
+    <button class="btn ghost" style="width:100%;padding:13px;margin-top:9px" onclick="reseedConfirm()">Recomeçar plano do zero</button>
+    <p class="muted" style="margin-top:12px;text-align:center">${MODE==='online'?'<span style="color:var(--verde)">●</span> Sincronizado com o Supabase.':'Modo local — sem sincronização.<br>Toque em <b>Entrar / Sincronizar</b> para conectar.'}</p>`;
   openModal();
 };
-function reseed(){if(confirm('Recomeçar do zero? Isso apaga o plano atual e recarrega a semana inicial.')){S=seedState();saveState();closeModal();go('hoje');toast('Plano reiniciado');}}
+function reseedConfirm(){
+  iaSheet('Recomeçar do zero?<br><span style="color:var(--ink-soft)">Isso apaga o plano atual e recarrega a semana inicial.</span>',
+    [['Sim, recomeçar','doReseed()','primary'],['Cancelar','closeModal()']]);
+}
+function doReseed(){S=seedState();saveState();closeModal();go('hoje');toast('Plano reiniciado');}
+async function reconnect(){
+  if(!supa && window.supabase && typeof window.supabase.createClient==='function' && SB_URL.startsWith('http')){
+    try{supa=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+  }
+  if(supa){
+    closeModal();
+    document.getElementById('app').classList.add('hidden');
+    showLogin('Entre com o e-mail e a senha do Conteúdo para sincronizar.');
+  }else{
+    toast('Sem conexão no momento. Recarregando…');
+    setTimeout(()=>location.reload(),800);
+  }
+}
 async function logout(){if(supa){try{await supa.auth.signOut();}catch(e){}}location.reload();}
 
 /* ---------- toast ---------- */
