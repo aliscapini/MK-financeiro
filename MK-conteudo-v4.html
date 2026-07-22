@@ -258,7 +258,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.5</b></div>
+  <div class="footer">Salão Michele Krasniak · Central de Conteúdo <b>v4.6</b></div>
 </div>
 </div>
 
@@ -372,7 +372,7 @@ function generateNextWeek(S){
  suggestFromWeek(S);
  ageRotation(S);
  const carried=S.posts.filter(p=>{const pub=S.tasks.find(t=>t.postId===p.id&&t.tipo==='publicacao');return!(pub&&pub.status==='feito');});
- S.anchor=iso(addDays(parse(S.anchor),7));
+ {const nextMon=addDays(parse(S.anchor),7);const curMon=mondayOf(today());S.anchor=iso(nextMon<curMon?curMon:nextMon);}
  S.weekIndex=(S.weekIndex||0)+1;
  const rnd=rng(1000+S.weekIndex*97);
  const mon=parse(S.anchor);
@@ -560,7 +560,7 @@ function descartaTarefa(taskId){S.tasks=S.tasks.filter(x=>x.id!==taskId);saveSta
 function descartaPost(postId){removePost(postId);saveState();closeModal();render();toast('Post descartado');}
 
 function weekClosable(){if(!S.posts.length)return false;return S.posts.every(p=>{const pub=S.tasks.find(t=>t.postId===p.id&&t.tipo==='publicacao');return pub&&pub.status==='feito';});}
-function doGenerateNextWeek(){generateNextWeek(S);saveState();go('semana');toast('Próxima semana planejada ✨');}
+function doGenerateNextWeek(){generateNextWeek(S);saveState();go('semana');toast('Semana gerada ✨');}
 
 /* ---------- briefing ---------- */
 function buildBriefing(post){
@@ -595,20 +595,24 @@ function hojeTasks(){
   const d=today();const fazer=[],atrasadas=[],preparar=[],concluidas=[];
   const td=iso(d);
   S.tasks.forEach(t=>{
+    if(!S.posts.find(p=>p.id===t.postId))return; // ignora tarefa órfã (post não existe mais)
     if(t.status==='feito'){if(t.doneAt===td)concluidas.push(t);return;}
-    if(!prevDone(t))return;const due=parse(t.due);
-    if(due.getTime()===d.getTime())fazer.push(t);else if(due<d)atrasadas.push(t);else if(due<=addDays(d,3))preparar.push(t);});
+    const due=parse(t.due);
+    if(due<d){atrasadas.push(t);return;}            // TODA atrasada aparece, sem esconder pela cadeia
+    if(!prevDone(t))return;                           // hoje/futuro segue a ordem da cadeia
+    if(due.getTime()===d.getTime())fazer.push(t);
+    else if(due<=addDays(d,3))preparar.push(t);});
   const by=(a,b)=>parse(a.due)-parse(b.due);
   return {fazer:fazer.sort(by),atrasadas:atrasadas.sort(by),preparar:preparar.sort(by),concluidas:concluidas.sort(by)};
 }
 const TIPO_LABEL={roteiro:'Roteiro',captacao:'Captação',edicao:'Edição',publicacao:'Publicar',anuncio:'Anúncio',stories:'Stories',avaliar:'Avaliar resultado'};
 function taskCard(t,flag){
-  const post=S.posts.find(p=>p.id===t.postId);const due=parse(t.due);const done=t.status==='feito';
+  const post=S.posts.find(p=>p.id===t.postId);const pid=post?post.id:'';const due=parse(t.due);const done=t.status==='feito';
   const flagHtml=flag?`<span class="flag ${flag}">${flag==='atrasada'?'Atrasada':flag==='preparar'?'Preparar · '+DIAS[due.getDay()].slice(0,3):flag==='aval'?'Avaliar':'Hoje'}</span>`:'';
   const isPub=(t.tipo==='publicacao');const isAval=(t.tipo==='avaliar');
   let extra='';
-  if(t.tipo==='roteiro')extra=`<button class="btn ghost" onclick="openBriefing('${post.id}')">Briefing ClaudIA</button>`;
-  if(isAval)extra=done?`<button class="btn ghost" onclick="openAvaliar('${post.id}','${t.id}')">Ver / editar avaliação</button>`:`<button class="btn primary" onclick="openAvaliar('${post.id}','${t.id}')">Avaliar agora</button>`;
+  if(t.tipo==='roteiro'&&post)extra=`<button class="btn ghost" onclick="openBriefing('${pid}')">Briefing ClaudIA</button>`;
+  if(isAval&&post)extra=done?`<button class="btn ghost" onclick="openAvaliar('${pid}','${t.id}')">Ver / editar avaliação</button>`:`<button class="btn primary" onclick="openAvaliar('${pid}','${t.id}')">Avaliar agora</button>`;
   if(isPub)extra=done
     ?`<button class="btn ghost" onclick="uncompleteTask('${t.id}')">Desfazer publicação</button>`
     :`<button class="btn primary" onclick="completeTask('${t.id}')">✓ Confirmar publicação</button>`;
@@ -664,11 +668,11 @@ function renderSemana(){
         <button class="btn" onclick="go('hoje')">Ver tarefas</button>
       </div>
     </div>`;});
-  const closable=weekClosable();
-  h+=`<div class="weekcta ${closable?'':'locked'}">
-    <h4>${closable?'Pronta para a próxima semana':'Próxima semana'}</h4>
-    <p>${closable?'Todos os posts foram publicados. Gere a próxima semana — o sistema usa a rotação, as avaliações e as observações registradas.':'Publique todos os posts da semana para liberar o planejamento automático.'}</p>
-    <button onclick="${closable?'doGenerateNextWeek()':''}" ${closable?'':'disabled'}>Gerar próxima semana ✨</button></div>`;
+  const behind=parse(S.anchor)<mondayOf(today());
+  h+=`<div class="weekcta">
+    <h4>${behind?'Ir para a semana atual':'Gerar próxima semana'}</h4>
+    <p>${behind?'Seu plano está numa semana que já passou. Resolva as tarefas atrasadas na aba Hoje e, quando quiser, gere a semana atual aqui.':'Gera a próxima semana usando a rotação, as avaliações e as observações registradas.'}</p>
+    <button onclick="doGenerateNextWeek()">${behind?'Gerar a semana atual ✨':'Gerar próxima semana ✨'}</button></div>`;
   el.innerHTML=h;
 }
 function renderResultados(){
