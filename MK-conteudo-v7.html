@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FAF7F4">
+<title>MK · Central de Conteúdo v7</title>
+<link rel="apple-touch-icon" href="MK-icon-conteudo.png">
+<link rel="apple-touch-icon" sizes="512x512" href="MK-icon-conteudo.png">
+<link rel="icon" type="image/png" href="MK-icon-conteudo.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MK Conteúdo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF7F4;--surface:#FFFFFF;--ink:#2d2420;--ink-soft:#6f6258;
+  --marrom:#9b8570;--nude:#ccad96;--line:#ece4da;--line-soft:#f3ede6;
+  --roxo:#8b6fae;--verde:#7c9f7e;--amarelo:#cB9a4a;--vermelho:#c4796b;
+  --shadow:0 1px 2px rgba(45,36,32,.04),0 6px 22px rgba(45,36,32,.06);--r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Jost',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  font-weight:400;line-height:1.5;font-size:16px;padding-bottom:60px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px}
+.serif{font-family:'Cormorant Garamond',serif}
+.hidden{display:none!important}
+
+/* ===== login ===== */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.loginbox{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);
+  padding:32px 26px;max-width:380px;width:100%;text-align:center}
+.loginbox img{height:52px;margin-bottom:6px}
+.loginbox .desc{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--marrom);font-weight:300;margin:0 0 14px;padding-left:.42em}
+.loginbox .bl{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--marrom);font-weight:500;margin-bottom:22px}
+.loginbox input{width:100%;font-family:inherit;font-size:15px;border:1px solid var(--line);border-radius:11px;
+  padding:13px 14px;margin-bottom:11px;background:#fff;color:var(--ink)}
+.loginbox button{width:100%;background:var(--marrom);color:#fff;border:none;border-radius:11px;padding:14px;
+  font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;margin-top:4px}
+.loginbox .err{color:var(--vermelho);font-size:13px;margin-top:10px;min-height:16px}
+.loginbox .off{font-size:12px;color:var(--ink-soft);margin-top:16px;line-height:1.4}
+
+/* ===== header ===== */
+header{padding:16px 0 4px;text-align:center;position:relative}
+.logo{height:36px;width:auto;opacity:.92;margin-bottom:5px}
+.brandline{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--marrom);font-weight:500}
+.sync{position:absolute;top:18px;right:0;font-size:10.5px;font-weight:500;padding:4px 10px;border-radius:99px;
+  background:var(--line-soft);color:var(--ink-soft);display:flex;align-items:center;gap:5px}
+.sync .d{width:7px;height:7px;border-radius:50%;background:var(--nude)}
+.sync.ok .d{background:var(--verde)} .sync.saving .d{background:var(--amarelo)} .sync.off .d{background:var(--vermelho)}
+.menu{position:absolute;top:16px;left:0;background:none;border:none;font-size:20px;color:var(--ink-soft);cursor:pointer;padding:4px}
+
+/* ===== hero ===== */
+.hero{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero .eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--nude);font-weight:600}
+.hero h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:32px;line-height:1.05;margin:4px 0 2px}
+.hero .sub{color:var(--ink-soft);font-size:14px}
+.hero .mission{margin-top:14px;display:flex;align-items:baseline;gap:8px}
+.hero .mission b{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600;color:var(--marrom);line-height:1}
+.hero .mission span{font-size:14px;color:var(--ink-soft)}
+.hero .weekpill{position:absolute;top:18px;right:18px;font-size:11px;background:var(--line-soft);
+  color:var(--marrom);padding:5px 10px;border-radius:99px;font-weight:500}
+
+/* ===== tabs ===== */
+nav.tabs{position:sticky;top:0;z-index:30;background:rgba(250,247,244,.86);backdrop-filter:blur(10px);margin-top:16px;padding:6px 0}
+.tabs .row{display:flex;gap:5px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px}
+.tab{flex:1;text-align:center;padding:9px 3px;border-radius:10px;font-size:12.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;border:none;background:none;font-family:inherit;transition:.18s}
+.tab.active{background:var(--marrom);color:#fff}
+main{margin-top:10px}
+.view{display:none;animation:fade .25s ease}.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;margin:18px 2px 8px}
+.muted{color:var(--ink-soft);font-size:13px}
+
+/* ===== task card ===== */
+.task{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 14px 16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start}
+.task.done{opacity:.55}
+.task.pubtask{border-left:3px solid var(--marrom)}
+.task .check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--nude);margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff}
+.task .check:active{transform:scale(.9)}
+.task.done .check{background:var(--verde);border-color:var(--verde)}
+.task .check svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;opacity:0;transition:.15s}
+.task.done .check svg{opacity:1}
+.task .body{flex:1;min-width:0}
+.task .ttype{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--marrom)}
+.task .ttitle{font-size:15px;font-weight:500;margin:2px 0 3px}
+.task.done .ttitle{text-decoration:line-through}
+.task .tmeta{font-size:12.5px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:4px 10px}
+.task .tmeta b{color:var(--marrom);font-weight:500}
+.flag{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
+.flag.hoje{background:#f4ebe4;color:var(--marrom)}
+.flag.atrasada{background:#f7e6e2;color:var(--vermelho)}
+.flag.preparar{background:#eef2ec;color:var(--verde)}
+.flag.aval{background:#efe9f4;color:var(--roxo)}
+.task .actions{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:12.5px;font-weight:500;border-radius:10px;padding:7px 12px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.btn.primary{background:var(--marrom);color:#fff;border-color:var(--marrom)}
+.btn.ghost{background:var(--line-soft);border-color:transparent;color:var(--marrom)}
+.btn:active{transform:translateY(1px)}
+.empty{text-align:center;padding:30px 20px;color:var(--ink-soft)}
+.empty .big{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--marrom);margin-bottom:4px}
+.stories-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.schip{font-size:11.5px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 10px;color:var(--ink-soft)}
+
+/* ===== post card ===== */
+.post{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:11px;box-shadow:var(--shadow)}
+.post.adiado{border-color:var(--nude);border-style:dashed}
+.post .ph{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.post .day{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom)}
+.post h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;margin:3px 0 2px;line-height:1.15}
+.post .pmeta{font-size:12.5px;color:var(--ink-soft)}
+.post .pilar{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--line-soft);color:var(--marrom);white-space:nowrap}
+.chain{display:flex;gap:5px;margin-top:12px}
+.step{flex:1;text-align:center}
+.step .dot{height:8px;border-radius:99px;background:var(--line);transition:.2s}
+.step.done .dot{background:var(--verde)}.step.now .dot{background:var(--marrom)}
+.step .lbl{font-size:9px;margin-top:4px;color:var(--ink-soft)}
+.step.done .lbl{color:var(--verde)}.step.now .lbl{color:var(--marrom);font-weight:600}
+.post .reason{margin-top:11px;font-size:12px;background:var(--line-soft);border-radius:10px;padding:8px 11px;color:var(--ink-soft)}
+.post .reason b{color:var(--marrom)}
+.post .stories-line{margin-top:10px;font-size:12px;color:var(--ink-soft)}
+.post .stories-line b{color:var(--marrom);font-weight:500}
+.post .prow{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+
+/* ===== semaphore / team / ideas ===== */
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:4px 2px 12px;font-size:11.5px;color:var(--ink-soft)}
+.legend span{display:flex;align-items:center;gap:5px}
+.dotc{width:11px;height:11px;border-radius:50%;flex:none}
+.dotc.NUNCA{background:var(--roxo)}.dotc.LIVRE{background:var(--verde)}.dotc.CUIDADO{background:var(--amarelo)}.dotc.RECENTE{background:var(--vermelho)}
+.semrow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:7px;box-shadow:var(--shadow)}
+.semrow .nm{flex:1;font-size:13.5px;font-weight:500}
+.semrow .nm small{display:block;color:var(--ink-soft);font-weight:400;font-size:11.5px}
+.st{font-size:10px;font-weight:600;letter-spacing:.05em;padding:3px 8px;border-radius:99px}
+.st.NUNCA{background:#efe9f4;color:var(--roxo)}.st.LIVRE{background:#eaf1ea;color:var(--verde)}.st.CUIDADO{background:#f7f0df;color:#9d7a28}.st.RECENTE{background:#f7e7e3;color:var(--vermelho)}
+.prof{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:7px;box-shadow:var(--shadow)}
+.prof .av{width:34px;height:34px;border-radius:50%;background:var(--line-soft);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--marrom);flex:none}
+.prof .pn{flex:1;font-size:13.5px;font-weight:500}.prof .pn small{display:block;color:var(--ink-soft);font-weight:400;font-size:11.5px}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+.badge.no{background:#efe9f4;color:var(--roxo)}.badge.yes{background:#eaf1ea;color:var(--verde)}
+.idea{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:8px;box-shadow:var(--shadow)}
+.idea .it{font-size:14px;font-weight:500}
+.idea .ig{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-top:2px}
+.idea .im{font-size:11.5px;color:var(--marrom);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap}
+.prio{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:99px}
+.prio.ALTA{background:#f7e7e3;color:var(--vermelho)}.prio.MEDIA{background:#f7f0df;color:#9d7a28}.prio.BAIXA{background:#eef0ec;color:var(--ink-soft)}
+.origem{font-size:10.5px;color:var(--roxo);background:#efe9f4;border-radius:99px;padding:2px 8px;margin-top:6px;display:inline-block}
+
+/* ===== forms / aval ===== */
+.field{margin-bottom:11px}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:500}
+.field input,.field textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.avalbtns{display:flex;gap:8px;margin-bottom:11px}
+.avalbtn{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 6px;font-family:inherit;font-size:13px;cursor:pointer;text-align:center;color:var(--ink-soft);transition:.15s}
+.avalbtn .em{font-size:22px;display:block;margin-bottom:3px}
+.avalbtn.sel{border-color:var(--marrom);background:var(--line-soft);color:var(--marrom);font-weight:600}
+.toggle{display:flex;gap:8px;margin-bottom:11px}
+.toggle button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft)}
+.toggle button.sel{border-color:var(--marrom);background:var(--line-soft);color:var(--marrom);font-weight:600}
+
+/* ===== cta / future ===== */
+.weekcta{background:var(--marrom);color:#fff;border-radius:16px;padding:16px;margin-top:8px;box-shadow:var(--shadow)}
+.weekcta h4{font-family:'Cormorant Garamond',serif;font-size:21px;margin:0 0 4px;font-weight:600}
+.weekcta p{font-size:13px;opacity:.9;margin:0 0 12px}
+.weekcta button{width:100%;background:#fff;color:var(--marrom);border:none;border-radius:12px;padding:12px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer}
+.weekcta.locked{background:var(--line-soft);color:var(--ink-soft)}
+.weekcta.locked h4{color:var(--ink)}
+.weekcta.locked button{background:#fff;color:var(--ink-soft);opacity:.6}
+.future{background:linear-gradient(135deg,#fff,#faf6f1);border:1px dashed var(--nude);border-radius:16px;padding:16px;margin-top:14px}
+.future h4{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;margin:0 0 6px;color:var(--marrom)}
+.future ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-soft)}.future li{margin-bottom:5px}
+.future .tag{display:inline-block;font-size:10px;font-weight:600;color:var(--nude);border:1px solid var(--nude);border-radius:99px;padding:2px 9px;letter-spacing:.06em}
+
+/* ===== modal / toast ===== */
+.modal{position:fixed;inset:0;background:rgba(45,36,32,.42);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal.open{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:20px 18px 28px;max-height:92vh;overflow:auto;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheethead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.sheet h3{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;margin:2px 0 3px}
+.xbtn{background:var(--line-soft);border:none;width:34px;height:34px;border-radius:50%;font-size:18px;color:var(--ink-soft);cursor:pointer;flex:none}
+.copybox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px;font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink);max-height:42vh;overflow:auto}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:500;opacity:0;transition:.3s;z-index:200;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.footer{text-align:center;padding:22px 0 8px;font-size:11px;color:var(--nude);letter-spacing:.04em}
+.aviso{margin:0 16px 14px;background:#f4ece5;border:1px solid var(--line);border-left:3px solid var(--marrom);border-radius:14px;padding:13px 15px}
+.aviso .t{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--marrom);font-weight:600;margin-bottom:5px}
+.aviso p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-soft)}
+.aviso p b{color:var(--ink);font-weight:500}
+
+/* ===== desktop ===== */
+@media(min-width:900px){
+  body{padding-bottom:40px}
+  .wrap{max-width:1080px;padding:0 32px}
+  header{padding:24px 0 8px}
+  .logo{height:42px}
+  nav.tabs{padding:10px 0}
+  .tabs .row{max-width:560px;margin:0 auto}
+  .hero{padding:30px 34px}
+  .hero h1{font-size:42px}
+  .hero .mission b{font-size:48px}
+  .section-title{font-size:27px}
+  /* two-column grids on desktop */
+  #v-hoje,#v-semana,#v-resultados{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
+  #v-hoje .section-title,#v-semana .section-title,#v-resultados .section-title{grid-column:1/-1}
+  #v-semana .weekcta,#v-resultados .future{grid-column:1/-1}
+  #v-plano{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
+  #v-plano .section-title{grid-column:1/-1}
+  #v-plano .legend{grid-column:1/-1}
+  .modal{align-items:center}
+  .sheet{border-radius:22px;max-width:560px}
+}
+/* v7: cards agrupados, fluxo */
+.task .glist{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.gline{display:flex;gap:9px;align-items:flex-start;background:var(--line-soft);border-radius:11px;padding:8px 10px}
+.gline .check{width:20px!important;height:20px!important;margin-top:1px!important}
+.gline.done .check{background:var(--verde);border-color:var(--verde)}
+.gline.done .check svg{opacity:1}
+.gline.done .gl{text-decoration:line-through;opacity:.6}
+.gline .gl{flex:1;min-width:0;font-size:12.5px;color:var(--ink-soft);line-height:1.4}
+.gline .gl b{color:var(--marrom);font-weight:600}
+.gline .gl .gt{color:var(--ink);font-size:13.5px;font-weight:500}
+.gline .lnk{background:none;border:none;color:var(--vermelho);font-family:inherit;font-size:11.5px;cursor:pointer;padding:2px 0;white-space:nowrap}
+.task .tip{margin-top:8px;font-size:12px;color:var(--ink-soft);background:#f4ece5;border-radius:10px;padding:7px 10px}
+.fluxo{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-bottom:11px;box-shadow:var(--shadow);grid-column:1/-1}
+.fluxo .fr{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.fluxo .fr:last-child{border-bottom:none}
+.fluxo .fd{flex:none;width:86px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom)}
+.fluxo .fw b{font-weight:500;color:var(--ink)}
+.fluxo .fw small{display:block;color:var(--ink-soft);font-size:11.5px}
+.weekflow{margin:0 2px 12px;font-size:12px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:4px 12px}
+.weekflow b{color:var(--marrom);font-weight:500}
+#v-semana .weekflow{grid-column:1/-1}
+.task .ico{flex:none;font-size:20px;line-height:1.25;width:26px;text-align:center}
+.post .pilar.mechas{background:#f6ecd9;color:#9a7535}
+#v-hoje .full{grid-column:1/-1}
+.stday{padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}.stday:last-child{border-bottom:none}
+.stday .sd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom);margin-bottom:2px}
+.stday .st{color:var(--ink-soft)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="loginbox">
+    <img id="loginlogo" alt="Salão de Beleza MK">
+    <div class="desc">Salão de Beleza</div>
+    <div class="bl">Central de Conteúdo</div>
+    <input id="email" type="email" placeholder="E-mail" autocomplete="username">
+    <input id="senha" type="password" placeholder="Senha" autocomplete="current-password">
+    <button id="loginbtn">Entrar</button>
+    <div class="err" id="loginerr"></div>
+    <div class="off" id="loginoff"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+<div class="wrap">
+  <header>
+    <button class="menu" id="menuBtn">⋯</button>
+    <img class="logo" id="logo" alt="Salão de Beleza MK">
+    <div class="brandline">Central de Conteúdo</div>
+    <div class="sync" id="syncPill"><span class="d"></span><span id="syncTxt">—</span></div>
+  </header>
+
+  <section class="hero">
+    <div class="weekpill" id="weekpill">—</div>
+    <div class="eyebrow">Hoje</div>
+    <h1 id="heroDate">—</h1>
+    <div class="sub" id="heroSub">—</div>
+    <div class="mission"><b id="missionN">0</b><span id="missionTxt">tarefa para hoje</span></div>
+  </section>
+
+  <nav class="tabs"><div class="row">
+    <button class="tab active" data-v="hoje">Hoje</button>
+    <button class="tab" data-v="semana">Semana</button>
+    <button class="tab" data-v="resultados">Resultados</button>
+    <button class="tab" data-v="plano">Plano</button>
+  </div></nav>
+
+  <div class="aviso" id="avisoAgosto">
+    <div class="t">Guia de conteúdo · sem marcação</div>
+    <p>O app sugere <b>o que gravar e postar</b> — não precisa marcar nada. Por semana: <b>2 reels</b> (gravados quando aparecer a cliente certa e editados pelo editor terceiro em até 3 dias), <b>1 carrossel</b> na sexta e <b>stories todos os dias</b>, na hora e sem edição. <b>Pelo menos metade é sobre mechas.</b> O tráfego pago segue fora do app.</p>
+  </div>
+
+  <main>
+    <div class="view active" id="v-hoje"></div>
+    <div class="view" id="v-semana"></div>
+    <div class="view" id="v-resultados"></div>
+    <div class="view" id="v-plano"></div>
+  </main>
+
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.0</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+</div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const LOGO_B64="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";
+const SB_URL="https://npkxefmhnuqewdflwatm.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3hlZm1obnVxZXdkZmx3YXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNTQ0MzYsImV4cCI6MjA5NzczMDQzNn0.ahNWg8L4EY3b08rBXJG-l3HZgCoW57eJJZFeTaoF1TQ";
+const FUNC_URL=SB_URL+"/functions/v1/gerar-roteiros";
+const SEED={"servicos": [{"categoria": "Cortes", "nome": "Corte", "preco": "R$250", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "O corte que rejuvenesce — visagismo na prática", "pilares": ["Bastidores & Conexao", "Transformacao"]}, {"categoria": "Cortes", "nome": "Corte Bordado", "preco": "R$300", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Antes/depois: remoção de frizz sem química", "pilares": ["Transformacao", "Bastidores & Conexao"]}, {"categoria": "Cortes", "nome": "Corte e Hidratação", "preco": "R$250", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel: por que corte + hidratação juntos?", "pilares": ["Educacao & Autoridade", "Bastidores & Conexao"]}, {"categoria": "Escova", "nome": "Escova com hidratação", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel curto — diferencial do protocolo", "pilares": ["Educacao & Autoridade", "Venda Direta"]}, {"categoria": "Escova", "nome": "Escova horário fixo", "preco": "R$120", "vezes": 1, "status": "RECENTE", "semanasDesde": 0, "proximoAngulo": "Escova com horário fixo na semana — praticidade para quem não abre mão do cabelo pronto", "pilares": ["Venda Direta"]}, {"categoria": "Escova", "nome": "Escova Básica", "preco": "R$150", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Escova que dura: o segredo está na preparação do fio", "pilares": ["Educacao & Autoridade", "Bastidores & Conexao"]}, {"categoria": "Escova", "nome": "Pacote escova semanal", "preco": "R$600", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Stories: fidelização — 'venha toda semana'", "pilares": ["Venda Direta"]}, {"categoria": "Escova", "nome": "Pacote escova 2x semana", "preco": "R$1.200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Público executiva — rotina de autocuidado", "pilares": ["Venda Direta"]}, {"categoria": "Sobrancelha", "nome": "Design sobrancelha", "preco": "R$50", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Stories antes/depois rápido", "pilares": ["Transformacao", "Bastidores & Conexao"]}, {"categoria": "Sobrancelha", "nome": "Sobrancelha + hena", "preco": "R$80", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel: hena x brow lamination", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Maquiagem", "nome": "Maquiagem profissional", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel evento — Jihad Bianchi", "pilares": ["Bastidores & Conexao", "Educacao & Autoridade", "Transformacao"]}, {"categoria": "Penteado", "nome": "Penteado para eventos", "preco": "A partir R$250", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Sazonal — festas de fim de ano / formaturas", "pilares": ["Sazonalidade", "Bastidores & Conexao"]}, {"categoria": "Pre/Pos Quimica", "nome": "Pré-química", "preco": "R$200", "vezes": 1, "status": "CUIDADO", "semanasDesde": 1, "proximoAngulo": "Post dedicado: o que é e por que é obrigatório", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Pre/Pos Quimica", "nome": "Pós-química", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Par com pré-química — fazer os dois juntos", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Mechas", "nome": "Mechas (geral)", "preco": "A partir R$500", "vezes": 3, "status": "RECENTE", "semanasDesde": 0, "proximoAngulo": "Processo completo / dia de mechas", "pilares": ["Transformacao", "Educacao & Autoridade"]}, {"categoria": "Coloracao", "nome": "Coloração", "preco": "R$250", "vezes": 1, "status": "RECENTE", "semanasDesde": 0, "proximoAngulo": "Antes/depois real cobertura de brancos — público 50+", "pilares": ["Transformacao", "Educacao & Autoridade"]}, {"categoria": "Coloracao", "nome": "Tonalizante", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel rápido: o que é tonalizante", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Alinhamento", "nome": "Alinhamento e Blindagem", "preco": "A partir R$400", "vezes": 1, "status": "RECENTE", "semanasDesde": 0, "proximoAngulo": "Antes/depois mais detalhado — processo completo", "pilares": ["Transformacao"]}, {"categoria": "Tratamentos", "nome": "Extreme Redken — Força", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel: qual tratamento é certo pra você?", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "Allsoft Redken — Nutrição", "preco": "R$200", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Incluir no carrossel de tratamentos", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "K-Pak Joico — Proteção", "preco": "R$300", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel tratamentos", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "Metal Detox L’Oréal", "preco": "R$300", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel dedicado: o que os metais fazem", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "Absolut Repair L’Oréal", "preco": "R$250", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel tratamentos", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "Cera Vegana Infusion Truss", "preco": "R$300", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Público que valoriza veganismo", "pilares": ["Educacao & Autoridade", "Venda Direta"]}, {"categoria": "Tratamentos", "nome": "Molecular Recuperação L’Oréal", "preco": "R$350", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel: o que é recuperação molecular", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Tratamentos", "nome": "Pacote Tratamento 4 sessões", "preco": "R$900", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Maior ticket — proposta de valor clara", "pilares": ["Venda Direta", "Educacao & Autoridade"]}, {"categoria": "Mega Hair", "nome": "Manutenção por Tela", "preco": "R$180", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Carrossel: tudo sobre mega hair", "pilares": ["Educacao & Autoridade"]}, {"categoria": "Unhas e Pés", "nome": "Manicure (Mãos)", "preco": "R$45", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Stories antes/depois rápido da esmaltação", "pilares": ["Bastidores & Conexao", "Venda Direta"]}, {"categoria": "Unhas e Pés", "nome": "Pedicure (Pés)", "preco": "R$50", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel: pés bonitos e saudáveis para o verão", "pilares": ["Bastidores & Conexao", "Venda Direta"]}, {"categoria": "Unhas e Pés", "nome": "Manicure e Pedicure (Mãos e Pés)", "preco": "R$90", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Mãos e pés no mesmo horário — o momento de autocuidado da semana", "pilares": ["Venda Direta", "Bastidores & Conexao"]}, {"categoria": "Unhas e Pés", "nome": "Podologia", "preco": "Consultar", "vezes": 0, "status": "NUNCA", "semanasDesde": null, "proximoAngulo": "Reel: podologia é saúde, não só estética — com a Cleia", "pilares": ["Educacao & Autoridade", "Bastidores & Conexao"]}], "profissionais": [{"nome": "Michele Krasniak", "instagram": "@michelekrasniakbc", "especialidade": "Mechas, coloração, tratamentos", "papel": "Rosto principal", "apareceu": true, "posts": 5, "proximoPasso": "Bastidores pessoais, antes/depois colorimetria"}, {"nome": "Jihad Bianchi", "instagram": "@jihadbianchi", "especialidade": "Colorimetria, mechas, maquiagem", "papel": "Equipe", "apareceu": false, "posts": 0, "proximoPasso": "LANÇAMENTO programado — primeira aparição"}, {"nome": "Cleia Lima", "instagram": "@cleiallima_podologa", "especialidade": "Manicure, pedicure, podologia", "papel": "Equipe", "apareceu": false, "posts": 0, "proximoPasso": "Diferenciar: Cleia = saúde/podologia"}], "banco": [{"prio": "ALTA", "tema": "Lançamento Jihad Bianchi", "profissional": "Jihad Bianchi", "formato": "Reels (30-45s)", "gancho": "Você sabe quem faz os loiros mais incríveis do salão?", "pilar": "Transformacao", "status": "ideia"}, {"prio": "ALTA", "tema": "Tratamentos: qual é o certo pra você?", "profissional": "Michele Krasniak", "formato": "Carrossel (6 slides)", "gancho": "Seu cabelo grita por ajuda e você não sabe qual tratamento?", "pilar": "Educacao & Autoridade", "status": "ideia"}, {"prio": "ALTA", "tema": "Cortes — o corte certo pro seu rosto", "profissional": "Michele Krasniak", "formato": "Stories (3)", "gancho": "Você sabe qual corte combina de verdade com o seu rosto?", "pilar": "Venda Direta", "status": "ideia"}, {"prio": "MEDIA", "tema": "Maquiagem para eventos", "profissional": "Jihad Bianchi", "formato": "Carrossel (5 slides)", "gancho": "5 segredos de maquiagem que dura o dia todo", "pilar": "Educacao & Autoridade", "status": "ideia"}, {"prio": "MEDIA", "tema": "Metal Detox — metais no cabelo", "profissional": "Michele Krasniak", "formato": "Reels educativo", "gancho": "O que os metais pesados fazem com seu cabelo", "pilar": "Educacao & Autoridade", "status": "ideia"}, {"prio": "MEDIA", "tema": "Pacote escova mensal", "profissional": "Michele / Equipe", "formato": "Stories + CTA", "gancho": "Venha toda semana por R$350/mês — cabelo sempre lindo", "pilar": "Venda Direta", "status": "ideia"}, {"prio": "MEDIA", "tema": "Cleia Lima — podologia", "profissional": "Cleia Lima", "formato": "Reels (30s)", "gancho": "Você cuida das suas unhas ou só dos seus pés?", "pilar": "Bastidores & Conexao", "status": "ideia"}, {"prio": "BAIXA", "tema": "Pacote Tratamento 4 sessões", "profissional": "Michele Krasniak", "formato": "Stories + CTA", "gancho": "Seu cabelo merece um mês de cuidado real", "pilar": "Venda Direta", "status": "ideia"}, {"prio": "BAIXA", "tema": "Depoimento de cliente", "profissional": "Cliente (autorização)", "formato": "Reels (15s)", "gancho": "Eu tinha medo e hoje não vivo sem as mechas", "pilar": "Bastidores & Conexao", "status": "ideia"}, {"prio": "BAIXA", "tema": "Mega Hair — manutenção", "profissional": "Equipe", "formato": "Carrossel", "gancho": "Tudo sobre mega hair que ninguém te conta", "pilar": "Educacao & Autoridade", "status": "ideia"}]};
+document.getElementById('logo').src=document.getElementById('loginlogo').src="data:image/png;base64,"+LOGO_B64;
+/* ===== ENGINE ===== */
+/* ===== MK Conteúdo v2 — engine (pure logic, testable in node) ===== */
+const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+ // v7 ritmo leve: Qui, Sex, Sáb (gravação em lote na terça)
+const FORMATOS=['Reels (30-45s)','Reels (15-30s)','Carrossel','Antes e Depois','Reels educativo'];
+const PILAR_FORMATOS={
+ 'Transformacao':['Antes e Depois','Reels (30-45s)'],
+ 'Educacao & Autoridade':['Carrossel','Reels educativo'],
+ 'Bastidores & Conexao':['Reels (15-30s)','Carrossel'],
+ 'Venda Direta':['Carrossel','Reels (30-45s)'],
+ 'Lancamento Profissional':['Reels (15-30s)','Carrossel'],
+ 'Sazonalidade':['Carrossel','Reels (30-45s)'],
+};
+/* v7: stories todos os dias (ter–sáb), instantâneos e sem edição — o app só direciona os temas */
+const OBJETIVO_PILAR={'Transformacao':'Mostrar a transformação e despertar desejo — fechar com convite para a avaliação gratuita.',
+ 'Educacao & Autoridade':'Ensinar algo útil e mostrar que a Michele domina o assunto.',
+ 'Bastidores & Conexao':'Humanizar: mostrar o clima do salão e a equipe de verdade.',
+ 'Venda Direta':'Levar para o WhatsApp — CTA claro para agendar.',
+ 'Lancamento Profissional':'Apresentar a profissional e gerar confiança.',
+ 'Sazonalidade':'Aproveitar a data e convidar para agendar.'};
+ // 2 reels + 1 carrossel
+/* v7: edição de vídeo com editor terceiro; Jihad grava em lote (terça) e agenda (quinta) */
+function isCarrossel(f){return /Carrossel/i.test(f||'');}
+/* prazos fixos na semana: roteiro sáb anterior · gravação ter · edição qua · agendar qui */
+/* --- modo agosto/2026: sem anúncios no app (tráfego pago produzido fora) --- */
+function semAnuncios(St){return !(St&&St.anunciosAtivos===true);}
+
+/* date utils */
+function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function iso(d){return d.toISOString().slice(0,10);}
+function parse(s){const d=new Date(s+'T00:00:00');d.setHours(0,0,0,0);return d;}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);x.setHours(0,0,0,0);return x;}
+function mondayOf(d){return addDays(d,-((d.getDay()+6)%7));}
+function fmtShort(d){return d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function weekLabel(m){return fmtShort(m)+'–'+fmtShort(addDays(m,5));}
+function uid(){return Math.random().toString(36).slice(2,9);}
+function rng(seed){let s=((seed%2147483647)+2147483646)%2147483647;if(s===0)s=1;return()=>(s=s*16807%2147483647)/2147483647;}
+function shuffle(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ---- rotation ---- */
+function ageRotation(S){
+ S.servicos.forEach(s=>{
+  if(s.vezes>0)s.semanasDesde=(s.semanasDesde==null?0:s.semanasDesde)+1;
+  if(s.vezes===0)s.status='NUNCA';
+  else if(s.semanasDesde<2)s.status='RECENTE';
+  else if(s.semanasDesde<4)s.status='CUIDADO';
+  else s.status='LIVRE';
+  if(typeof s.naoRepetir==='number'){s.naoRepetir-=1;if(s.naoRepetir<=0)delete s.naoRepetir;}
+ });
+}
+function servScore(s,pilar){
+ if(s.status==='RECENTE')return -1;
+ if(!s.pilares.includes(pilar))return -1;
+ if(s.naoRepetir>0)return -1;
+ return s.status==='NUNCA'?100:s.status==='LIVRE'?45:12;
+}
+function profForService(S,serv){
+ const n=serv.nome.toLowerCase();let nome='Michele Krasniak';
+ if(n.includes('maquiagem'))nome='Jihad Bianchi';
+ else if(n.includes('manicure')||n.includes('pedicure')||n.includes('podolog')||n.includes('unha'))nome='Cleia Lima';
+ const p=S.profissionais.find(x=>x.nome===nome)||S.profissionais[0];
+ return {nome:p.nome,boost:p.apareceu?0:60,why:p.apareceu?'':'estreia de '+p.nome.split(' ')[0]};
+}
+function bancoFor(S,pilar){
+ const pr={ALTA:0,MEDIA:1,BAIXA:2};
+ return S.banco.filter(b=>b.status==='ideia'&&b.pilar===pilar).sort((a,b)=>pr[a.prio]-pr[b.prio])[0];
+}
+function estreiaPendente(S){return S.profissionais.some(p=>!p.apareceu);}
+
+/* ---- stories ---- */
+/* v7: guia semanal — sem marcação de tarefas; pelo menos 50% do conteúdo em mechas */
+const STORY_MECHAS=[
+ {t:'Antes das mechas',como:'Foto ou 5s do cabelo da cliente de mechas no início (com autorização).'},
+ {t:'Papel e pincel',como:'Close das mechas sendo feitas — o processo encanta.'},
+ {t:'Hora do tonalizante',como:'Mostre o tonalizante sendo aplicado e diga para que serve.'},
+ {t:'Loiro na luz',como:'Resultado das mechas com o cabelo em movimento, perto da janela.'},
+ {t:'Enquete do loiro',como:'“Loiro mais dourado ou mais gelado?” com a enquete do Instagram.'},
+ {t:'Caixinha sobre mechas',como:'“Me pergunta sobre mechas” — responda nos próximos dias.'},
+ {t:'Dica rápida para loiras',como:'Michele, 15s olhando para a câmera: um cuidado com o loiro.'},
+ {t:'Retoque de raiz',como:'Mostre uma raiz crescida e como fica depois do retoque.'},
+ {t:'Homecare do loiro',como:'Mostre o produto que a cliente leva para casa e por quê.'},
+ {t:'Reação da cliente',como:'O momento em que a cliente de mechas se vê no espelho.'},
+];
+const STORY_GERAL=[
+ {t:'Bom dia do salão',como:'Abrindo o salão: 5–10s do espaço, do café ou da luz da manhã.'},
+ {t:'Equipe em ação',como:'Alguém da equipe trabalhando: Cleia nas unhas, Jihad na maquiagem.'},
+ {t:'Mesa de trabalho',como:'Close nos produtos e ferramentas do próximo atendimento.'},
+ {t:'Pergunta do dia',como:'Texto simples na tela com uma pergunta sobre cuidados.'},
+ {t:'Depoimento espontâneo',como:'Cliente contando em 5s como se sentiu (sempre com autorização).'},
+ {t:'Resultado do dia',como:'O resultado mais bonito do dia, de qualquer serviço.'},
+ {t:'Unhas da semana',como:'Cleia mostra a cor ou o trabalho mais bonito da semana.'},
+];
+const STORY_REPOST_REELS={t:'Repost do reels',como:'Se postou um reels hoje, compartilhe nos stories; se não, faça um bastidor rápido.'};
+const STORY_REPOST_CARROSSEL={t:'Repost do carrossel',como:'Compartilhe o carrossel de hoje nos stories assim que sair (18h).'};
+function storiesWeek(S,mon,rnd){
+ S.stories=[];[2,3,4,5,6].forEach(wd=>{const date=iso(addDays(mon,wd-1));S.stories.push({id:uid(),date,temas:temasDoDia(date,rnd)});});
+}
+function temasDoDia(date,rnd){
+ const wd=parse(date).getDay();const pm=shuffle(STORY_MECHAS,rnd),pg=shuffle(STORY_GERAL,rnd);
+ const t=[{...pm[0],m:true},{...pm[1],m:true}]; // 2 de 3 temas em mechas
+ t.push(wd===5?STORY_REPOST_CARROSSEL:(wd===4||wd===6)?STORY_REPOST_REELS:pg[0]);
+ return t;
+}
+function storiesDoDia(d){
+ const wd=d.getDay();if(wd<2)return null; // seg e dom: salão fechado
+ const date=iso(d);const st=(S.stories||[]).find(x=>x.date===date);if(st)return st;
+ return {id:'auto',date,temas:temasDoDia(date,rng(parseInt(date.replace(/-/g,''),10)))};
+}
+const MECHAS_REELS=[
+ {tema:'Antes e depois de mechas — o loiro que fica bonito todos os dias',formato:'Antes e Depois',pilar:'Transformacao'},
+ {tema:'Mechas do início ao fim em 30 segundos',formato:'Reels (30-45s)',pilar:'Transformacao'},
+ {tema:'Retoque de raiz: como as mechas ficam sempre bonitas',formato:'Antes e Depois',pilar:'Transformacao'},
+ {tema:'Do castanho ao iluminado: mechas em cabelo escuro',formato:'Antes e Depois',pilar:'Transformacao'},
+ {tema:'Tonalizante: o segredo do loiro que não amarela',formato:'Reels (15-30s)',pilar:'Educacao & Autoridade'},
+ {tema:'Pré-química antes das mechas: o que acontece no fio',formato:'Reels (30-45s)',pilar:'Educacao & Autoridade'},
+ {tema:'Loiro dourado ou loiro gelado? Os dois na prática',formato:'Reels (15-30s)',pilar:'Transformacao'},
+ {tema:'Dia de mechas: a reação da cliente no final',formato:'Reels (15-30s)',pilar:'Bastidores & Conexao'},
+];
+const MECHAS_CARROSSEL=[
+ {tema:'5 erros que destroem suas mechas',pilar:'Educacao & Autoridade'},
+ {tema:'Mechas duram para sempre? O que manter e quando',pilar:'Educacao & Autoridade'},
+ {tema:'Pré e pós-química: por que o seu loiro precisa',pilar:'Educacao & Autoridade'},
+ {tema:'Loiro amarelado: por que acontece e como resolver',pilar:'Educacao & Autoridade'},
+ {tema:'O que a Michele analisa na avaliação gratuita de mechas',pilar:'Venda Direta'},
+ {tema:'Homecare para loiras: o que usar em casa',pilar:'Educacao & Autoridade'},
+ {tema:'Quanto tempo leva para chegar ao loiro dos sonhos',pilar:'Educacao & Autoridade'},
+];
+const CLIENTE_IDEAL={'Mechas':'Cliente de mechas com bastante diferença entre o antes e o depois — e que topar aparecer',
+ 'Coloracao':'Cliente de coloração ou tonalizante com mudança de tom bem visível','Alinhamento':'Cliente com frizz ou volume bem visível no antes',
+ 'Pre/Pos Quimica':'Cliente com fio sensibilizado, para mostrar o brilho no depois','Tratamentos':'Cliente com fio sensibilizado, para mostrar o brilho no depois',
+ 'Cortes':'Cliente que vai mudar bastante o comprimento ou o formato','Escova':'Cliente de escova com bastante volume no antes',
+ 'Unhas e Pés':'Cliente da Cleia que topar mostrar mãos ou pés','Maquiagem':'Cliente de evento (noiva, formatura, festa)',
+ 'Penteado':'Cliente de evento (noiva, formatura, festa)','Sobrancelha':'Cliente com mudança visível no desenho da sobrancelha',
+ 'Mega Hair':'Cliente de mega hair em dia de manutenção'};
+function clienteFor(St,servNome,prof,pilar){
+ if(pilar==='Lancamento Profissional')return 'Uma cliente da '+String(prof).split(' ')[0]+' que topar aparecer';
+ const sv=St.servicos.find(x=>x.nome===servNome);return (sv&&CLIENTE_IDEAL[sv.categoria])||'Cliente agendada para o serviço que topar aparecer';
+}
+function proximoDe(St,lista,key){St.mechasIdx=St.mechasIdx||{};const i=(St.mechasIdx[key]||0)%lista.length;St.mechasIdx[key]=i+1;return lista[i];}
+function ehMechas(St,servNome,tema){const sv=St.servicos.find(x=>x.nome===servNome);return (sv&&sv.categoria==='Mechas')||/mecha|loir/i.test(tema||'');}
+function novoItem(St,tipo,o){return {id:uid(),tipo,date:o.date||null,formato:o.formato,pilar:o.pilar,tema:o.tema,profissional:o.profissional,
+ servico:o.servico,mechas:!!o.mechas,objetivo:OBJETIVO_PILAR[o.pilar]||'',referencia:'',orientacoes:'',
+ cliente:tipo==='reels'?clienteFor(St,o.servico,o.profissional,o.pilar):'',roteiro:'',reason:o.reason||'',horario:'18h',obs:''};}
+function itemMechas(St,tipo,date){
+ const sv=St.servicos.find(s=>s.categoria==='Mechas')||St.servicos[0];
+ if(tipo==='reels'){const t=proximoDe(St,MECHAS_REELS,'reels');return novoItem(St,'reels',{...t,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:'💛 <b>foco em mechas</b>'});}
+ const t=proximoDe(St,MECHAS_CARROSSEL,'carrossel');
+ return novoItem(St,'carrossel',{...t,formato:'Carrossel',date,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:'💛 <b>foco em mechas</b>'});
+}
+function escolherDiverso(St,pilar,used,rnd){
+ let c=St.servicos.filter(s=>s.categoria!=='Mechas'&&!used.has(s.nome)&&s.status!=='RECENTE'&&!(s.naoRepetir>0));
+ if(!c.length)c=St.servicos.filter(s=>s.categoria!=='Mechas'&&!used.has(s.nome));
+ const sc=s=>(s.status==='NUNCA'?100:s.status==='LIVRE'?45:12)+((s.pilares||[]).includes(pilar)?20:0)+rnd()*10;
+ return c.map(s=>({s,v:sc(s)})).sort((a,b)=>b.v-a.v)[0].s;
+}
+function itemDiverso(St,tipo,date,used,rnd){
+ let pilar,serv,prof,tema;const reason=[];
+ const estreante=tipo==='reels'?St.profissionais.find(p=>!p.apareceu&&!/Michele/.test(p.nome)):null;
+ if(estreante){
+  pilar='Lancamento Profissional';
+  serv=St.servicos.find(s=>s.categoria!=='Mechas'&&profForService(St,s).nome===estreante.nome&&!used.has(s.nome))||escolherDiverso(St,pilar,used,rnd);
+  prof=estreante.nome;tema='Conheça a '+estreante.nome.split(' ')[0]+' — '+estreante.especialidade.toLowerCase();reason.push('<b>estreia de profissional</b>');
+ }else{
+  pilar=tipo==='reels'?'Bastidores & Conexao':(St.weekIndex%4<2?'Educacao & Autoridade':'Venda Direta');
+  serv=escolherDiverso(St,pilar,used,rnd);prof=profForService(St,serv).nome;tema=serv.proximoAngulo||serv.nome;
+  reason.push(serv.status==='NUNCA'?'🟣 <b>nunca divulgado</b>':serv.status==='LIVRE'?'🟢 <b>livre</b>':'🟡 ângulo novo');
+  const idea=bancoFor(St,pilar);
+  if(idea&&!/mecha|loir/i.test(idea.tema)){
+   const tl=idea.tema.toLowerCase();
+   const hint=St.servicos.find(sv=>sv.categoria!=='Mechas'&&tl.includes(sv.nome.toLowerCase()))
+    ||St.servicos.find(sv=>sv.categoria!=='Mechas'&&tl.includes(sv.categoria.toLowerCase().split('/')[0].replace(/s$/,'')));
+   tema=idea.tema;idea.status='planejado';reason.push('💡 banco de ideias');
+   if(hint){serv=hint;prof=profForService(St,hint).nome;}
+  }
+ }
+ reason.push('diversificar serviços');
+ return novoItem(St,tipo,{date,formato:tipo==='carrossel'?'Carrossel':'Reels (15-30s)',pilar,tema,profissional:prof,servico:serv.nome,mechas:false,reason:reason.join(' · ')});
+}
+function buildWeek(St,mon,rnd){
+ // 3 posts: 2 reels + 1 carrossel; sempre 2 de 3 em mechas (o reels 1 é sempre mechas, o outro alterna)
+ const sexta=iso(addDays(mon,4));const used=new Set();const par=((St.weekIndex||0)%2===0);
+ const r1=itemMechas(St,'reels');
+ const car=par?itemMechas(St,'carrossel',sexta):itemDiverso(St,'carrossel',sexta,used,rnd);used.add(car.servico);
+ const r2=par?itemDiverso(St,'reels',null,used,rnd):itemMechas(St,'reels');
+ St.posts=[r1,r2,car];St.tasks=[];
+ St.posts.forEach(p=>{
+  const sv=St.servicos.find(x=>x.nome===p.servico);if(sv){sv.vezes=(sv.vezes||0)+1;sv.semanasDesde=0;sv.status='RECENTE';if(sv.naoRepetir)delete sv.naoRepetir;}
+  const pf=St.profissionais.find(x=>p.profissional.includes(x.nome.split(' ')[0]));if(pf){pf.apareceu=true;pf.posts=(pf.posts||0)+1;}
+ });
+}
+
+/* ---- build a post + its task chain ---- */
+
+/* ---- planner v7: 3 posts fixos (qui/sex/sáb), pilar por dia, rollover, feedback ---- */
+function generateNextWeek(S){
+ S.history.push({week:weekLabel(parse(S.anchor)),posts:S.posts.map(p=>({tema:p.tema,tipo:p.tipo,mechas:p.mechas,status:'sugerido',obs:p.obs||''}))});
+ // os conteúdos da semana vão para Resultados (preencher é opcional)
+ S.posts.forEach(p=>{if(!S.metricas.find(m=>m.postId===p.id))S.metricas.push({postId:p.id,tema:p.tema,pub:p.date||S.anchor,pilar:p.pilar,alcance:'',msgs:'',agenda:'',salvos:''});});
+ if(S.metricas.length>40)S.metricas=S.metricas.slice(-40);
+ suggestFromWeek(S);
+ ageRotation(S);
+ {const nextMon=addDays(parse(S.anchor),7);const curMon=mondayOf(today());S.anchor=iso(nextMon<curMon?curMon:nextMon);}
+ S.weekIndex=(S.weekIndex||0)+1;
+ const rnd=rng(1000+S.weekIndex*97);const mon=parse(S.anchor);
+ buildWeek(S,mon,rnd);storiesWeek(S,mon,rnd);trimBanco(S);
+}
+
+/* ---- feedback: completing an evaluation feeds the banco ---- */
+function trimBanco(S){
+ const open=S.banco.filter(b=>b.status==='ideia');
+ if(open.length<=30)return;
+ const pr={ALTA:0,MEDIA:1,BAIXA:2};
+ const keep=open.sort((a,b)=>pr[a.prio]-pr[b.prio]).slice(0,30);
+ const keepSet=new Set(keep);
+ S.banco=S.banco.filter(b=>b.status!=='ideia'||keepSet.has(b));
+}
+function suggestFromWeek(S){
+ const m=S.metricas.filter(x=>x.alcance&&!isNaN(parseInt(x.alcance)));
+ if(!m.length)return;
+ const best=m.reduce((a,b)=>parseInt(b.alcance)>parseInt(a.alcance)?b:a);
+ const post=S.posts.find(p=>p.id===best.postId);
+ if(post&&!S.banco.some(b=>b.origem&&b.origem.includes('melhor alcance')&&b.pilar===post.pilar)){
+  S.banco.unshift({prio:'ALTA',tema:'Segundo ângulo: '+post.tema.slice(0,40),profissional:post.profissional,formato:post.formato.replace(' + Anúncio Meta',''),
+   gancho:'Foi o melhor alcance da semana — explorar de novo',pilar:post.pilar,status:'ideia',origem:'🏆 melhor alcance da semana'});
+ }
+}
+
+/* ===== UI / SUPABASE ===== */
+/* ================= MK Conteúdo v2 — UI + Supabase ================= */
+const STORE='mk_conteudo_v2';
+let supa=null,MODE='online',S=null,lastTs=null,saveTimer=null;
+const PILAR_NOME={'Transformacao':'Transformação','Educacao & Autoridade':'Educação & Autoridade','Bastidores & Conexao':'Bastidores & Conexão','Venda Direta':'Venda Direta','Lancamento Profissional':'Lançamento','Sazonalidade':'Sazonalidade'};
+
+/* ---------- semana inicial v7 (3 posts: qui, sex, sáb) ---------- */
+function seedState(){
+  let mon=mondayOf(today());const wd=today().getDay();
+  if(wd===6||wd===0)mon=addDays(mon,7); // no fim de semana, planeja a próxima
+  const st={schema:3,v7:true,fluxo:5,anchor:iso(mon),weekIndex:0,mechasIdx:{},
+    servicos:JSON.parse(JSON.stringify(SEED.servicos)),
+    profissionais:JSON.parse(JSON.stringify(SEED.profissionais)),
+    banco:JSON.parse(JSON.stringify(SEED.banco)),
+    posts:[],tasks:[],stories:[],metricas:[],anuncios:[],history:[]};
+  const rnd=rng(7);
+  buildWeek(st,mon,rnd);storiesWeek(st,mon,rnd);
+  st.banco.forEach(b=>{if(/Lançamento Jihad/.test(b.tema))b.status='planejado';});
+  return st;
+}
+
+/* ---------- task gating ---------- */
+
+/* ---------- completion ---------- */
+
+
+function doGenerateNextWeek(){generateNextWeek(S);saveState();go('semana');toast('Semana gerada ✨');}
+
+/* ---------- briefing ---------- */
+function buildBriefing(p){
+  const serv=S.servicos.find(s=>s.nome===p.servico);const reels=p.tipo==='reels';
+  let txt=`ROTEIRO — ${reels?'REELS (gravar quando houver a cliente certa)':'CARROSSEL · '+DIAS[parse(p.date).getDay()]+' '+fmtShort(parse(p.date))+', 18h'} · ${p.formato}\nPILAR: ${PILAR_NOME[p.pilar]||p.pilar}\nTEMA: ${p.tema}\nPROFISSIONAL: ${p.profissional}\nSERVIÇO: ${p.servico}${serv?' · '+serv.preco:''}\n`;
+  if(p.mechas)txt+=`FOCO: mechas e loiros (serviço principal do salão)\n`;
+  else if(serv&&serv.proximoAngulo)txt+=`ÂNGULO SUGERIDO: ${serv.proximoAngulo}\n`;
+  if(p.objetivo)txt+=`OBJETIVO: ${p.objetivo}\n`;
+  if(p.cliente)txt+=`CLIENTE IDEAL: ${p.cliente}\n`;
+  if(p.referencia)txt+=`REFERÊNCIA: ${p.referencia}\n`;
+  if(p.roteiro)txt+=`\n--- ROTEIRO JÁ GERADO PELA IA (ajuste se quiser) ---\n${p.roteiro}\n`;
+  const past=(S.history||[]).flatMap(h=>h.posts||[]).filter(x=>x.obs&&x.tema&&p.tema&&x.tema.split(' ')[0]===p.tema.split(' ')[0]);
+  if(past.length)txt+=`OBSERVAÇÕES ANTERIORES: ${past.map(x=>x.obs).join(' | ')}\n`;
+  txt+=`\nCONTEXTO PARA A CLAUDIA:\n• Salão de Beleza MK — logo MK♡ (sem "Michele Krasniak"), paleta marrom/nude\n• Voz da Michele em 1ª pessoa, tom casual e caloroso\n• Sempre "mais bonita", nunca "linda"; nada que sugira agenda vazia\n• Equipe atual: Michele, Jihad, Camile e Cleia\n• Legendas obrigatórias\n• CTA: avaliação gratuita · wa.me/5547992660103 · @michelekrasniakbc\n• ${reels?'Gravação no meio de um atendimento real, quando aparecer a cliente certa (Jihad e Camile); o editor terceiro edita em até 3 dias':'Jihad e Camile separam as fotos; a arte do carrossel é montada no Canva'}\n\nPeça à ClaudIA: ${reels?'gancho (0-3s) + desenvolvimento + CTA + legenda + hashtags, uma lista curta de tomadas simples para gravar durante o atendimento e orientações de edição para o editor terceiro':'roteiro de slides (capa + desenvolvimento + CTA) + legenda + hashtags'}.`;
+  return txt;
+}
+
+/* ================= RENDER ================= */
+let CURVIEW='hoje';
+function go(v){CURVIEW=v;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.v===v));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));render();}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderResultados();renderPlano();}
+function renderAviso(){}
+
+function renderHero(){
+  const d=today();const st=storiesDoDia(d);
+  document.getElementById('weekpill').textContent='Semana '+weekLabel(parse(S.anchor));
+  document.getElementById('heroDate').textContent=DIAS[d.getDay()]+', '+d.getDate()+' de '+['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][d.getMonth()];
+  document.getElementById('heroSub').textContent=st?'Guia do dia — é só seguir, sem marcar nada.':'Salão fechado hoje — bom momento para revisar a semana.';
+  document.getElementById('missionN').textContent=st?st.temas.length:'—';
+  document.getElementById('missionTxt').textContent=st?'temas de stories para hoje':'sem stories hoje';
+}
+/* v7: tarefas iguais do mesmo dia viram um card só (ex.: gravação em lote) */
+function lembretesHoje(){
+  const d=today();const wd=d.getDay();const L=[];const d3=addDays(d,3);
+  if(wd<2){L.push(['🗓️','Salão fechado','Se ainda não fez, Michele e Camile geram a semana e os roteiros com IA.']);return L;}
+  L.push(['🎬','Teve a cliente certa hoje?',`Se uma cliente combinar com um dos reels abaixo, Jihad e Camile gravam e a Camile manda álbum + briefing ao editor no WhatsApp. Gravado hoje, fica pronto até ${DIAS[d3.getDay()].toLowerCase()} ${fmtShort(d3)}.`]);
+  if(wd===4||wd===6)L.push(['📲','Dia de reels no feed','Se o editor já entregou algum reels, poste hoje às 18h — pode ser um gravado na semana passada.']);
+  if(wd===3)L.push(['🖼️','Fotos do carrossel de sexta','Jihad e Camile separam as fotos; Michele e Camile montam a arte no Canva.']);
+  if(wd===4)L.push(['🖼️','Carrossel de sexta','Michele e Camile: arte pronta e agendada para sexta, 18h.']);
+  if(wd===5)L.push(['🖼️','Carrossel vai ao ar às 18h','Lembre do repost nos stories.']);
+  if(wd===6)L.push(['✍️','Planejar a próxima semana','Michele e Camile: gerar a próxima semana e os roteiros com IA.']);
+  return L;
+}
+function storiesCard(st){
+  const d=parse(st.date);
+  return `<div class="task"><div class="ico">📱</div><div class="body">
+    <div class="ttitle">${st.temas.length} temas para gravar na hora, sem edição</div>
+    <div class="tmeta"><span>👤 Jihad</span><span>📅 ${DIAS[d.getDay()]} ${fmtShort(d)}</span></div>
+    <div class="glist">${st.temas.map(x=>`<div class="gline"><div class="gl"><div class="gt">${x.m?'💛 ':''}${x.t}</div>${x.como}</div></div>`).join('')}</div>
+    <div class="tip">Celular na mão, na hora, sem edição — natural vale mais que perfeito. Texto, enquete e música do próprio Instagram bastam.</div>
+  </div></div>`;
+}
+function itemCard(p){
+  const d=p.date?parse(p.date):null;
+  const quando=p.tipo==='carrossel'&&d?`${DIAS[d.getDay()]} ${fmtShort(d)}, 18h`:'grave quando tiver a cliente certa';
+  return `<div class="post">
+    <div class="ph"><div><div class="day">${p.tipo==='reels'?'Reels':'Carrossel'} · ${esc(p.formato)} · ${quando}${p.roteiro?' · <span style=\'color:var(--verde);font-weight:600\'>roteiro pronto</span>':''}</div>
+      <h3>${esc(p.tema)}</h3><div class="pmeta">👤 ${esc(p.profissional)} · 💅 ${esc(p.servico)}</div></div>
+      <div class="pilar ${p.mechas?'mechas':''}">${p.mechas?'💛 Mechas':(PILAR_NOME[p.pilar]||p.pilar)}</div></div>
+    ${p.objetivo?`<div class="stories-line"><b>🎯 Objetivo:</b> ${esc(p.objetivo)}</div>`:''}
+    ${p.cliente?`<div class="stories-line"><b>👩 Cliente ideal:</b> ${esc(p.cliente)}</div>`:''}
+    ${p.referencia?`<div class="stories-line"><b>🔗 Referência:</b> ${linkify(p.referencia)}</div>`:''}
+    ${p.reason?`<div class="reason">${p.reason}</div>`:''}
+    <div class="prow">
+      <button class="btn" onclick="openEditPost('${p.id}')">✏️ Editar</button>
+      ${p.roteiro?`<button class="btn primary" onclick="showRoteiro('${p.id}')">Ver roteiro</button>`:`<button class="btn ghost" onclick="openBriefing('${p.id}')">Briefing ClaudIA</button>`}
+      ${p.tipo==='reels'?`<button class="btn ghost" onclick="copiarBriefingReel('${p.id}')">Copiar para o editor</button>`:''}
+    </div></div>`;
+}
+function renderHoje(){
+  const el=document.getElementById('v-hoje');const st=storiesDoDia(today());let h='';
+  if(st)h+=`<div class="section-title">Stories de hoje</div>`+storiesCard(st);
+  h+=`<div class="section-title">Lembretes</div>`+lembretesHoje().map(([i,t,x])=>`<div class="task"><div class="ico">${i}</div><div class="body"><div class="ttitle">${t}</div><div class="tmeta" style="display:block;line-height:1.5">${x}</div></div></div>`).join('');
+  const reels=S.posts.filter(p=>p.tipo==='reels');
+  if(reels.length)h+=`<div class="section-title">Reels para gravar</div><div class="muted full" style="margin:-4px 2px 8px">Sugestões da semana ${weekLabel(parse(S.anchor))}. Grave quando aparecer a cliente certa.</div>`+reels.map(itemCard).join('');
+  const car=S.posts.find(p=>p.tipo==='carrossel');if(car)h+=`<div class="section-title">Carrossel da semana</div>`+itemCard(car);
+  el.innerHTML=h;
+}
+function renderSemana(){
+  const el=document.getElementById('v-semana');const mon=parse(S.anchor);const nm=S.posts.filter(p=>p.mechas).length;
+  let h=`<div class="section-title">Semana ${weekLabel(mon)}</div>`;
+  h+=`<div class="weekflow"><span>🎬 <b>2 reels</b> — gravar quando tiver cliente</span><span>🖼️ <b>1 carrossel</b> — sexta, 18h</span><span>📱 Stories <b>ter a sáb</b></span><span>💛 Mechas: <b>${nm} de ${S.posts.length}</b> posts</span></div>`;
+  if(!S.posts.length)h+=`<div class="empty"><div class="big">Sem sugestões ainda</div></div>`;
+  else h+=`<div style="margin:0 2px 14px" class="full"><button class="btn primary" style="width:100%;padding:13px;font-size:15px" onclick="gerarRoteirosIA()">✨ Gerar roteiros com IA</button><div class="muted" style="text-align:center;margin-top:6px">Ajuste as sugestões abaixo antes, se quiser — a IA escreve em cima delas.</div></div>`;
+  S.posts.forEach(p=>{h+=itemCard(p);});
+  if((S.stories||[]).length){
+    h+=`<div class="section-title">Stories da semana</div><div class="fluxo"><div class="muted" style="padding:8px 0 4px">Temas para gravar na hora, sem edição. 💛 = mechas.</div>`;
+    S.stories.forEach(st=>{const d=parse(st.date);h+=`<div class="stday"><div class="sd">${DIAS[d.getDay()]} ${fmtShort(d)}</div><div class="st">${st.temas.map(x=>(x.m?'💛 ':'')+x.t).join(' · ')}</div></div>`;});
+    h+=`</div>`;}
+  const behind=parse(S.anchor)<mondayOf(today());
+  h+=`<div class="weekcta">
+    <h4>${behind?'Ir para a semana atual':'Gerar próxima semana'}</h4>
+    <p>${behind?'O plano está numa semana que já passou. Gere a semana atual quando quiser.':'Novas sugestões de reels, carrossel e stories, mantendo pelo menos metade em mechas. Reels não gravados podem ser regravados depois — eles ficam no histórico.'}</p>
+    <button onclick="doGenerateNextWeek()">${behind?'Gerar a semana atual ✨':'Gerar próxima semana ✨'}</button></div>`;
+  el.innerHTML=h;
+}
+function renderResultados(){
+  const el=document.getElementById('v-resultados');let h=`<div class="section-title">Resultados dos posts</div>`;
+  if(!S.metricas.length)h+=`<div class="empty"><div class="big">Ainda sem resultados</div><div class="muted">Quando você gera a próxima semana, os conteúdos da semana anterior aparecem aqui para anotar os números, se quiser.</div></div>`;
+  S.metricas.forEach((m,i)=>{const post=S.posts.find(p=>p.id===m.postId);const aval=post?post.aval:null;
+    h+=`<div class="post"><div class="day">${DIAS[parse(m.pub).getDay()]} ${fmtShort(parse(m.pub))}${aval?' · '+({bom:'👍 Bom',medio:'😐 Médio',fraco:'👎 Fraco'}[aval]):''}</div>
+    <h3 style="font-size:17px">${m.tema}</h3>
+    <div class="grid2" style="margin-top:10px">
+      <div class="field"><label>Alcance</label><input value="${m.alcance||''}" onchange="setMetric(${i},'alcance',this.value)" inputmode="numeric"></div>
+      <div class="field"><label>Mensagens WhatsApp</label><input value="${m.msgs||''}" onchange="setMetric(${i},'msgs',this.value)" inputmode="numeric"></div>
+      <div class="field"><label>Agendamentos</label><input value="${m.agenda||''}" onchange="setMetric(${i},'agenda',this.value)" inputmode="numeric"></div>
+      <div class="field"><label>Salvamentos</label><input value="${m.salvos||''}" onchange="setMetric(${i},'salvos',this.value)" inputmode="numeric"></div>
+    </div></div>`;});
+  if(S.anuncios.length){h+=`<div class="section-title">Anúncios Meta</div>`;
+    S.anuncios.forEach((a,i)=>{h+=`<div class="post"><h3 style="font-size:17px">${a.criativo}</h3>
+      <div class="grid2" style="margin-top:10px">
+        <div class="field"><label>Orçamento (R$)</label><input value="${a.orcamento||''}" onchange="setAd(${i},'orcamento',this.value)" inputmode="decimal"></div>
+        <div class="field"><label>Mensagens</label><input value="${a.msgs||''}" onchange="setAd(${i},'msgs',this.value)" inputmode="numeric"></div>
+        <div class="field"><label>Agendamentos</label><input value="${a.agenda||''}" onchange="setAd(${i},'agenda',this.value)" inputmode="numeric"></div>
+        <div class="field"><label>Custo / lead (R$)</label><input value="${a.custo||''}" onchange="setAd(${i},'custo',this.value)" inputmode="decimal"></div>
+      </div></div>`;});}
+  h+=`<div class="future"><span class="tag">EM BREVE</span><h4>Sincronização inteligente</h4>
+    <p class="muted">Quando ligarmos o financeiro e o CRM, esta tela passa a:</p>
+    <ul><li>Cruzar faturamento por serviço × posts para mostrar o que vira agendamento.</li>
+    <li>Ler tags e leads do CRM e sugerir conteúdo de valor para o WhatsApp.</li>
+    <li>Propor sozinha os próximos reels, stories e anúncios pelo retorno.</li>
+    <li>Usar o calendário do salão para não divulgar serviço sem agenda.</li></ul></div>`;
+  el.innerHTML=h;
+}
+function setMetric(i,k,v){S.metricas[i][k]=v;saveState();}
+function setAd(i,k,v){S.anuncios[i][k]=v;saveState();}
+function renderPlano(){
+  const el=document.getElementById('v-plano');
+  let h=`<div class="section-title">Como funciona</div><div class="fluxo">
+    <div class="fr"><div class="fd">Sábado</div><div class="fw"><b>Planejar a semana</b><small>Michele e Camile geram a próxima semana e os roteiros com IA</small></div></div>
+    <div class="fr"><div class="fd">Ter a Sáb</div><div class="fw"><b>Stories todos os dias</b><small>Jihad — 3 temas por dia, na hora, sem edição</small></div></div>
+    <div class="fr"><div class="fd">Cliente certa</div><div class="fw"><b>Gravar o reels</b><small>Jihad e Camile gravam durante o atendimento</small></div></div>
+    <div class="fr"><div class="fd">Mesmo dia</div><div class="fw"><b>Enviar ao editor</b><small>Camile — álbum + briefing (copiado do app) no WhatsApp</small></div></div>
+    <div class="fr"><div class="fd">Até 3 dias</div><div class="fw"><b>Edição</b><small>Editor terceiro devolve o reels pronto</small></div></div>
+    <div class="fr"><div class="fd">Qui ou Sáb</div><div class="fw"><b>Postar o reels, 18h</b><small>Jihad — pode ser na semana seguinte à gravação</small></div></div>
+    <div class="fr"><div class="fd">Sexta</div><div class="fw"><b>Carrossel, 18h</b><small>Fotos: Jihad e Camile · arte: Michele e Camile (Canva)</small></div></div>
+    <div class="fr"><div class="fd">Sempre</div><div class="fw"><b>💛 Pelo menos 50% em mechas</b><small>2 de 3 posts e 2 de 3 temas de stories por dia</small></div></div>
+  </div>`;
+  h+=`<div class="section-title">Rotação de serviços</div><div class="legend">
+    <span><i class="dotc NUNCA"></i>Nunca divulgado</span><span><i class="dotc LIVRE"></i>Livre</span>
+    <span><i class="dotc CUIDADO"></i>Cuidado</span><span><i class="dotc RECENTE"></i>Recente</span></div>`;
+  const ord={NUNCA:0,LIVRE:1,CUIDADO:2,RECENTE:3};
+  [...S.servicos].sort((a,b)=>ord[a.status]-ord[b.status]).forEach(s=>{
+    h+=`<div class="semrow"><i class="dotc ${s.status}"></i><div class="nm">${s.nome}<small>${s.categoria} · ${s.preco} · ${s.proximoAngulo||''}</small></div><div class="st ${s.status}">${s.status}</div></div>`;});
+  h+=`<div class="section-title">Equipe</div>`;
+  S.profissionais.forEach(p=>{const ini=p.nome.split(' ').map(x=>x[0]).slice(0,2).join('');
+    h+=`<div class="prof"><div class="av">${ini}</div><div class="pn">${p.nome}<small>${p.especialidade} · ${p.posts||0} post(s)</small></div><div class="badge ${p.apareceu?'yes':'no'}">${p.apareceu?'Já apareceu':'Nunca apareceu'}</div></div>`;});
+  h+=`<div class="section-title">Banco de ideias</div>`;
+  const pr={ALTA:0,MEDIA:1,BAIXA:2};
+  [...S.banco].filter(b=>b.status==='ideia').sort((a,b)=>pr[a.prio]-pr[b.prio]).forEach(b=>{
+    h+=`<div class="idea"><div style="display:flex;justify-content:space-between;gap:8px;align-items:start"><div class="it">${b.tema}</div><span class="prio ${b.prio}">${b.prio}</span></div>
+      <div class="ig">"${b.gancho}"</div><div class="im"><span>${b.formato}</span><span>👤 ${b.profissional}</span><span>${PILAR_NOME[b.pilar]||b.pilar}</span></div>
+      ${b.origem?`<span class="origem">${b.origem}</span>`:''}</div>`;});
+  el.innerHTML=h;
+}
+
+/* ---------- modals ---------- */
+/* ---- editar post da semana ---- */
+function openEditPost(postId){
+  const p=S.posts.find(x=>x.id===postId);if(!p)return;const reels=p.tipo==='reels';
+  const sheet=document.getElementById('sheet');
+  const servOpts=S.servicos.map(s=>`<option ${s.nome===p.servico?'selected':''}>${esc(s.nome)}</option>`).join('');
+  const profOpts=S.profissionais.map(x=>`<option ${x.nome===p.profissional?'selected':''}>${esc(x.nome)}</option>`).join('');
+  const fmts=['Antes e Depois','Reels (30-45s)','Reels (15-30s)','Reels educativo'];
+  const fmtOpts=fmts.map(x=>`<option ${p.formato===x?'selected':''}>${x}</option>`).join('');
+  sheet.innerHTML=`<div class="sheethead"><div><div class="muted" style="letter-spacing:.2em;text-transform:uppercase;font-size:10px;color:var(--nude)">Editar ${reels?'reels':'carrossel'}</div><h3 style="font-size:21px">Ajustar a sugestão</h3></div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div class="field"><label>Tema</label><textarea id="ed_tema" rows="2">${esc(p.tema)}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label>Profissional</label><select id="ed_prof">${profOpts}</select></div>
+      <div class="field"><label>Serviço</label><select id="ed_serv">${servOpts}</select></div>
+    </div>
+    ${reels?`<div class="field"><label>Formato</label><select id="ed_fmt">${fmtOpts}</select></div>`:''}
+    <div class="field"><label>Objetivo</label><textarea id="ed_obj" rows="2">${esc(p.objetivo||OBJETIVO_PILAR[p.pilar]||'')}</textarea></div>
+    ${reels?`<div class="field"><label>Cliente ideal para gravar</label><textarea id="ed_cli" rows="2">${esc(p.cliente||'')}</textarea></div>`:''}
+    <div class="field"><label>Referência (link ou descrição)</label><textarea id="ed_ref" rows="2" placeholder="Ex.: link de um reels de referência · “transição no estalo”">${esc(p.referencia||'')}</textarea></div>
+    <div class="field"><label>${reels?'Orientações para o editor (vão no briefing)':'Orientações para a arte'}</label><textarea id="ed_ori" rows="2">${esc(p.orientacoes||'')}</textarea></div>
+    <button class="btn primary" style="width:100%;padding:13px" onclick="saveEditPost('${postId}')">Salvar</button>`;
+  openModal();
+}
+function saveEditPost(postId){
+  const p=S.posts.find(x=>x.id===postId);if(!p)return;const v=id=>{const e=document.getElementById(id);return e?e.value.trim():null;};
+  const antes=[p.tema,p.servico,p.formato,p.objetivo,p.referencia].join('|');
+  p.tema=v('ed_tema')||p.tema;p.profissional=v('ed_prof')||p.profissional;p.servico=v('ed_serv')||p.servico;
+  if(v('ed_fmt'))p.formato=v('ed_fmt');
+  p.objetivo=v('ed_obj')||'';if(v('ed_cli')!==null)p.cliente=v('ed_cli');p.referencia=v('ed_ref')||'';p.orientacoes=v('ed_ori')||'';
+  p.mechas=ehMechas(S,p.servico,p.tema);
+  if(antes!==[p.tema,p.servico,p.formato,p.objetivo,p.referencia].join('|'))p.roteiro=''; // mudou: o roteiro antigo não vale mais
+  if(!/editado/.test(p.reason||''))p.reason=(p.reason?p.reason+' · ':'')+'✏️ editado';
+  saveState();closeModal();render();toast('Sugestão atualizada ✓');
+}
+
+/* ---- v7: helpers, álbum e área do editor ---- */
+function esc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?esc(u):'#';}
+function linkify(txt){return esc(txt).replace(/https?:\/\/[^\s&]+(?:&amp;[^\s&]+)*/g,m=>`<a href="${m}" target="_blank" rel="noopener">${m}</a>`);}
+function briefingReel(p){
+  return `🎬 REELS — ${p.tema}\n`+
+    `Formato: ${p.formato}\n`+
+    `Prazo: até 3 dias depois de receber o material · vai ao ar na próxima quinta ou sábado livre, 18h\n`+
+    `🎯 Objetivo: ${p.objetivo||OBJETIVO_PILAR[p.pilar]||'—'}\n`+
+    `🔗 Referência: ${p.referencia||'sem referência específica — seguir o roteiro'}\n`+
+    (p.orientacoes?`✂️ Orientações: ${p.orientacoes}\n`:'')+
+    `Padrão MK: legendas sempre, música suave, logo MK♡ no canto inferior, tons quentes (nunca frios).\n`+
+    (p.roteiro?`\n📝 Roteiro:\n${p.roteiro}\n`:'')+
+    `\n📁 O material gravado vai no álbum logo abaixo.`;
+}
+function copiarBriefingReel(postId){const p=S.posts.find(x=>x.id===postId);if(!p)return;document.getElementById('sheet')._txt=briefingReel(p);copyTxt();}
+
+/* ---- gerar roteiros com IA (Edge Function) ---- */
+function obsFor(p){
+  const past=(S.history||[]).flatMap(h=>h.posts||[]).filter(x=>x.obs&&x.tema&&x.tema.split(' ')[0]===p.tema.split(' ')[0]);
+  return past.map(x=>x.obs).join(' | ');
+}
+const REGRAS_CURTAS='Marca: Salão de Beleza MK · equipe atual: Michele, Jihad, Camile e Cleia · sempre "mais bonita", nunca "linda" · tomadas simples, gravadas durante o atendimento';
+const CONTEXTO_IA='Salão de Beleza MK, em Balneário Camboriú (nunca "Estúdio de Beleza" nem "Salão Michele Krasniak"). Equipe atual: Michele Krasniak (dona e rosto principal), Jihad Bianchi e Cleia Lima; não cite ex-integrantes da equipe. Voz da Michele em 1ª pessoa, tom casual e caloroso. Sempre "mais bonita", nunca "linda". Nunca frases que sugiram agenda vazia. CTA: WhatsApp wa.me/5547992660103 e Instagram @michelekrasniakbc. Público: mulheres 28–60, Balneário Camboriú + 15 km. Serviço foco: mechas e loiros. Pelo menos metade do conteúdo é sobre mechas e loiros. Os reels são gravados durante atendimentos reais, quando aparece a cliente certa, e um editor terceiro edita em até 3 dias — prefira tomadas simples e curtas e inclua orientações de edição. Stories são instantâneos, sem edição.';
+function gerarRoteirosIA(){
+  if(MODE!=='online'||!supa){iaSheet('<b>Precisa estar Sincronizado</b><br>Conecte-se (bolinha verde) para usar a IA.',[['Fechar','closeModal()']]);return;}
+  if(!S.posts.length){iaSheet('Gere uma semana primeiro.',[['Fechar','closeModal()']]);return;}
+  iaSheet('Gerar os roteiros desta semana com IA agora?<br><span style="color:var(--ink-soft)">Tem um pequeno custo por geração (centavos).</span>',[['Gerar agora','runGerarRoteiros()','primary'],['Cancelar','closeModal()']]);
+}
+function iaSheet(html,buttons){
+  const sheet=document.getElementById('sheet');
+  const btns=buttons.map(b=>`<button class="btn ${b[2]==='primary'?'primary':''}" style="flex:1;padding:13px" onclick="${b[1]}">${b[0]}</button>`).join('');
+  sheet.innerHTML=`<div class="sheethead"><div><div class="muted" style="letter-spacing:.2em;text-transform:uppercase;font-size:10px;color:var(--nude)">Roteiros com IA</div><h3 style="font-size:20px">ClaudIA</h3></div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <p id="ia_msg" style="font-size:15px;line-height:1.5;margin:4px 2px 16px">${html}</p>
+    <div id="ia_btns" style="display:flex;gap:8px">${btns}</div>`;
+  openModal();
+}
+async function runGerarRoteiros(){
+  document.getElementById('ia_msg').innerHTML='✨ <b>IA escrevendo os roteiros…</b><br><span style="color:var(--ink-soft)">Pode levar alguns segundos. Não feche esta tela.</span>';
+  document.getElementById('ia_btns').innerHTML='';
+  setSync('saving','IA escrevendo…');
+  const posts=S.posts.map(p=>({id:p.id,dia:p.date?DIAS[parse(p.date).getDay()]:'Livre (gravar quando houver a cliente certa)',formato:p.formato,pilar:PILAR_NOME[p.pilar]||p.pilar,tema:p.tema,profissional:p.profissional,servico:p.servico,anuncio:false,observacoes:[REGRAS_CURTAS,p.mechas?'Foco: mechas e loiros':'',p.objetivo?'Objetivo: '+p.objetivo:'',p.cliente?'Cliente ideal: '+p.cliente:'',p.referencia?'Referência: '+p.referencia:'',obsFor(p)].filter(Boolean).join(' | ')}));
+  try{
+    const {data:{session}}=await supa.auth.getSession();
+    if(!session){return iaResult('Sessão expirada. Saia e entre de novo.',false);}
+    const r=await fetch(FUNC_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_KEY},body:JSON.stringify({posts,contexto:CONTEXTO_IA})});
+    const j=await r.json().catch(()=>({error:'resposta inválida do servidor'}));
+    if(!r.ok||j.error){return iaResult('Falha na IA:<br><span style="color:var(--ink-soft);font-size:13px">'+(j.error||('erro '+r.status))+(j.detail?('<br>'+String(j.detail).slice(0,300)):'')+'</span>',false);}
+    let n=0;(j.roteiros||[]).forEach(rt=>{const p=S.posts.find(x=>x.id===rt.id);if(p){p.roteiro=rt.roteiro;n++;}});
+    saveState();setSync('ok','Sincronizado');
+    if(n){closeModal();render();toast('Roteiros prontos ✓ ('+n+')');}
+    else iaResult('A IA respondeu, mas não veio nenhum roteiro. Tente de novo.',false);
+  }catch(e){iaResult('Não consegui falar com a IA. Verifique a conexão e tente de novo.',false);}
+}
+function iaResult(msg,ok){
+  setSync('ok','Sincronizado');
+  const m=document.getElementById('ia_msg');if(m)m.innerHTML=msg;
+  const b=document.getElementById('ia_btns');if(b)b.innerHTML=`<button class="btn primary" style="flex:1;padding:13px" onclick="closeModal()">Fechar</button>`;
+}
+function showRoteiro(postId){
+  const post=S.posts.find(p=>p.id===postId);if(!post||!post.roteiro)return;
+  const sheet=document.getElementById('sheet');
+  sheet.innerHTML=`<div class="sheethead"><div><div class="muted" style="letter-spacing:.2em;text-transform:uppercase;font-size:10px;color:var(--nude)">Roteiro gerado pela IA</div><h3>${post.tema}</h3></div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div class="copybox">${post.roteiro.replace(/</g,'&lt;')}</div>
+    <div style="display:flex;gap:8px;margin-top:13px">
+      <button class="btn primary" style="flex:1;padding:12px" onclick="copyTxt()">Copiar roteiro</button>
+      <button class="btn" style="padding:12px" onclick="openEditPost('${postId}')">Editar post</button>
+    </div>
+    <p class="muted" style="margin-top:10px;text-align:center">Revise antes de produzir. Para refazer, edite o post e gere de novo.</p>`;
+  sheet._txt=post.roteiro;openModal();
+}
+
+function openBriefing(postId){const post=S.posts.find(p=>p.id===postId);if(!post)return;const txt=buildBriefing(post);
+  const sheet=document.getElementById('sheet');
+  sheet.innerHTML=`<div class="sheethead"><div><div class="muted" style="letter-spacing:.2em;text-transform:uppercase;font-size:10px;color:var(--nude)">Briefing para a ClaudIA</div><h3>${post.tema}</h3></div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div class="copybox">${txt.replace(/</g,'&lt;')}</div>
+    <div style="margin-top:13px"><button class="btn primary" style="width:100%;padding:12px" onclick="copyTxt()">Copiar briefing</button></div>
+    <p class="muted" style="margin-top:10px;text-align:center">Cole no chat com a ClaudIA para gerar o roteiro.</p>`;
+  sheet._txt=txt;openModal();}
+function copyTxt(){const txt=document.getElementById('sheet')._txt;const ok=()=>toast('Copiado ✓');
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(()=>fb(txt,ok));else fb(txt,ok);}
+function fb(txt,cb){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb();}catch(e){}ta.remove();}
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal();};
+
+/* ---------- menu ---------- */
+document.getElementById('menuBtn').onclick=()=>{
+  const sheet=document.getElementById('sheet');
+  const sheet2=sheet;
+  const localBtn = MODE==='online'
+    ? `<button class="btn" style="width:100%;padding:13px" onclick="logout()">Sair da conta</button>`
+    : `<button class="btn primary" style="width:100%;padding:13px" onclick="reconnect()">Entrar / Sincronizar</button>`;
+  sheet.innerHTML=`<div class="sheethead"><h3>Opções</h3><button class="xbtn" onclick="closeModal()">×</button></div>
+    ${localBtn}
+    <button class="btn ghost" style="width:100%;padding:13px;margin-top:9px" onclick="reseedConfirm()">Recomeçar plano do zero</button>
+    <p class="muted" style="margin-top:12px;text-align:center">${MODE==='online'?'<span style="color:var(--verde)">●</span> Sincronizado com o Supabase.':'Modo local — sem sincronização.<br>Toque em <b>Entrar / Sincronizar</b> para conectar.'}</p>`;
+  openModal();
+};
+function reseedConfirm(){
+  iaSheet('Recomeçar do zero?<br><span style="color:var(--ink-soft)">Isso apaga as sugestões atuais e recomeça o plano.</span>',
+    [['Sim, recomeçar','doReseed()','primary'],['Cancelar','closeModal()']]);
+}
+function doReseed(){S=seedState();saveState();closeModal();go('hoje');toast('Plano reiniciado');}
+async function reconnect(){
+  if(!supa && window.supabase && typeof window.supabase.createClient==='function' && SB_URL.startsWith('http')){
+    try{supa=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+  }
+  if(supa){
+    closeModal();
+    document.getElementById('app').classList.add('hidden');
+    showLogin('Entre com o e-mail e a senha do Conteúdo para sincronizar.');
+  }else{
+    toast('Sem conexão no momento. Recarregando…');
+    setTimeout(()=>location.reload(),800);
+  }
+}
+async function logout(){if(supa){try{await supa.auth.signOut();}catch(e){}}location.reload();}
+
+/* ---------- toast ---------- */
+let toastT;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+
+/* ================= SUPABASE / STATE ================= */
+function setSync(state,txt){const p=document.getElementById('syncPill');if(!p)return;p.className='sync '+state;document.getElementById('syncTxt').textContent=txt;}
+const RENOMES_SERV={'Escova (preço sábado)':'Escova horário fixo','Pacote semanal 4x':'Pacote escova semanal','Pacote 2x semana':'Pacote escova 2x semana','K-Pac Joico — Proteção':'K-Pak Joico — Proteção','Absolute Repair MK L’Oréal':'Absolut Repair L’Oréal'};
+function migrarV7(st){
+ let ch=false;
+ // preços e nomes da tabela v3 (o SEED é a fonte da verdade)
+ if(Array.isArray(st.servicos)){
+  st.servicos.forEach(sv=>{const novo=RENOMES_SERV[sv.nome];if(novo){
+    (st.posts||[]).forEach(p=>{if(p.servico===sv.nome)p.servico=novo;});sv.nome=novo;ch=true;}
+   const sd=SEED.servicos.find(x=>x.nome===sv.nome);if(sd&&sd.preco!==sv.preco){sv.preco=sd.preco;ch=true;}
+   if(sd&&sv.nome==='Escova horário fixo'&&/sábado/i.test(sv.proximoAngulo||'')){sv.proximoAngulo=sd.proximoAngulo;ch=true;}});
+  SEED.servicos.forEach(sd=>{if(!st.servicos.find(x=>x.nome===sd.nome)){st.servicos.push(JSON.parse(JSON.stringify(sd)));ch=true;}});
+ }
+ if(!st.v7){
+  // Rafael saiu da equipe (out/2026)
+  const temR=x=>/Rafael/.test(x||'');const tiraR=x=>(x||'').replace(/\s*(&|\+|e)\s*Rafael( Fiorentin)?/g,'');
+  if(Array.isArray(st.profissionais))st.profissionais=st.profissionais.filter(p=>!temR(p.nome));
+  if(Array.isArray(st.banco)){st.banco=st.banco.filter(b=>!(b.status==='ideia'&&temR(b.tema)));
+   st.banco.forEach(b=>{if(temR(b.profissional))b.profissional='Michele Krasniak';});}
+  if(Array.isArray(st.servicos))st.servicos.forEach(sv=>{if(temR(sv.proximoAngulo))sv.proximoAngulo=tiraR(sv.proximoAngulo);});
+  if(Array.isArray(st.posts)){
+   const remover=[];
+   st.posts.forEach(p=>{if(p.status==='Publicado')return;
+    p.tema=tiraR(p.tema);if(temR(p.profissional))p.profissional='Michele Krasniak';
+    if(temR(p.tema))remover.push(p.id);});
+   st.posts=st.posts.filter(p=>!remover.includes(p.id));
+   if(Array.isArray(st.tasks))st.tasks=st.tasks.filter(t=>!remover.includes(t.postId));
+  }
+  st.v7=true;ch=true;
+ }
+ if((st.fluxo||0)<5){
+  // formato guia: sem tarefas; 2 reels + 1 carrossel; 50% mechas; stories diários
+  let mon=mondayOf(today());const wd=today().getDay();if(wd===6||wd===0)mon=addDays(mon,7);
+  const ant=st.anchor?parse(st.anchor):null;if(ant&&ant>mon)mon=ant;
+  st.anchor=iso(mon);st.mechasIdx=st.mechasIdx||{};
+  const rnd=rng(2026+(st.weekIndex||0));buildWeek(st,mon,rnd);storiesWeek(st,mon,rnd);
+  st.fluxo=5;ch=true;
+ }
+ return ch;
+}
+function migrarEquipe(st){
+ if(!st)return false;let ch=migrarV7(st);
+ if(Array.isArray(st.profissionais)){const n=st.profissionais.filter(p=>!(p.nome||'').includes('Ana Paula'));if(n.length!==st.profissionais.length){st.profissionais=n;ch=true;}}
+ if(Array.isArray(st.tasks))st.tasks.forEach(t=>{if((t.resp||'').includes('Ana Paula')){t.resp='Jihad';ch=true;}});
+ if(Array.isArray(st.banco))st.banco.forEach(b=>{if((b.profissional||'').includes('Ana Paula')){b.profissional='Jihad Bianchi';ch=true;}});
+ if(Array.isArray(st.posts))st.posts.forEach(p=>{if((p.profissional||'').includes('Ana Paula')){p.profissional='Jihad Bianchi';ch=true;}});
+ if(Array.isArray(st.servicos))st.servicos.forEach(sv=>{if((sv.proximoAngulo||'').includes('Ana Paula')){sv.proximoAngulo=sv.proximoAngulo.replace(/Ana Paula( Trindade)?/g,'Jihad Bianchi');ch=true;}});
+ /* --- agosto/2026: limpa anúncios do plano já salvo --- */
+ if(semAnuncios(st)){
+  if(Array.isArray(st.posts))st.posts.forEach(p=>{if(p.anuncio){p.anuncio=false;p.formato=(p.formato||'').replace(' + Anúncio Meta','');ch=true;}});
+  if(Array.isArray(st.tasks)){const n=st.tasks.filter(t=>t.tipo!=='anuncio');if(n.length!==st.tasks.length){st.tasks=n;ch=true;}}
+  if(Array.isArray(st.banco))st.banco.forEach(b=>{if((b.formato||'').indexOf('Anúncio')>=0){b.formato=b.formato.replace(/\s*\+\s*Anúncio( Meta)?/,'');ch=true;}});
+  if(st.adWeekday){st.adWeekday=null;ch=true;}
+ }
+ return ch;
+}
+function mirrorLocal(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+function localLoad(){try{const r=localStorage.getItem(STORE);if(r)return JSON.parse(r);}catch(e){}return null;}
+function saveState(){
+  mirrorLocal();
+  if(MODE!=='online'||!supa){setSync('off','Local');return;}
+  setSync('saving','Salvando…');clearTimeout(saveTimer);saveTimer=setTimeout(pushState,600);
+}
+async function pushState(){
+  try{const ts=new Date().toISOString();
+    const {error}=await supa.from('mk_conteudo').upsert({id:'mk',state:S,updated_at:ts});
+    if(error)throw error;lastTs=ts;setSync('ok','Sincronizado');
+  }catch(e){setSync('off','Offline');}
+}
+async function pullState(){
+  const {data,error}=await supa.from('mk_conteudo').select('state,updated_at').eq('id','mk').maybeSingle();
+  if(error)throw error;return data;
+}
+async function refreshIfNewer(){
+  if(MODE!=='online'||!supa)return;
+  try{const d=await pullState();if(d&&d.updated_at&&d.updated_at!==lastTs){S=d.state;lastTs=d.updated_at;if(migrarEquipe(S))saveState();mirrorLocal();render();}}catch(e){}
+}
+
+/* ---------- boot ---------- */
+function showLogin(off){
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+  document.getElementById('loginoff').textContent=off||'';
+}
+async function afterLogin(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  setSync('saving','Carregando…');
+  try{
+    const d=await pullState();
+    if(d){S=d.state;lastTs=d.updated_at;if(migrarEquipe(S))await pushState();}else{S=seedState();await pushState();}
+    setSync('ok','Sincronizado');
+  }catch(e){
+    S=localLoad()||seedState();migrarEquipe(S);MODE='offline';setSync('off','Local');
+    toast('Sem sincronização — crie a tabela no Supabase');
+  }
+  mirrorLocal();render();
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshIfNewer();});
+}
+function startOffline(msg){
+  MODE='offline';
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  S=localLoad()||seedState();migrarEquipe(S);mirrorLocal();setSync('off','Local');render();
+  if(msg)toast(msg);
+  document.addEventListener('visibilitychange',()=>{});
+}
+async function boot(){
+  // try to init supabase; if the library/network isn't available, run locally
+  if(window.supabase&&typeof window.supabase.createClient==='function'&&SB_URL.startsWith('http')){
+    try{supa=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){supa=null;}
+  }
+  if(!supa){startOffline('Modo local — sem sincronização');return;}
+  try{
+    const {data}=await supa.auth.getSession();
+    if(data&&data.session){await afterLogin();}else{showLogin('Use o mesmo e-mail e senha do sistema financeiro.');}
+  }catch(e){startOffline('Modo local — sem conexão');}
+}
+document.getElementById('loginbtn').onclick=async()=>{
+  const email=document.getElementById('email').value.trim();
+  const senha=document.getElementById('senha').value;
+  const err=document.getElementById('loginerr');err.textContent='';
+  if(!email||!senha){err.textContent='Preencha e-mail e senha.';return;}
+  document.getElementById('loginbtn').textContent='Entrando…';
+  try{
+    const {error}=await supa.auth.signInWithPassword({email,password:senha});
+    if(error){err.textContent='E-mail ou senha incorretos.';document.getElementById('loginbtn').textContent='Entrar';return;}
+    await afterLogin();
+  }catch(e){err.textContent='Sem conexão. Tente novamente.';document.getElementById('loginbtn').textContent='Entrar';}
+};
+document.getElementById('senha').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginbtn').click();});
+
+boot();
+
+</script>
+</body>
+</html>
