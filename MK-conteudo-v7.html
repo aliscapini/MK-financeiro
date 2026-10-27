@@ -286,7 +286,7 @@ main{margin-top:10px}
 
   <div class="aviso" id="avisoAgosto">
     <div class="t">Guia de conteúdo · sem marcação</div>
-    <p>O app sugere <b>o que gravar e postar</b> — não precisa marcar nada. Por semana: <b>2 reels</b> (gravados quando aparecer a cliente certa e editados pelo editor terceiro em até 3 dias), <b>1 carrossel</b> na sexta e <b>stories todos os dias</b>, na hora e sem edição. <b>Pelo menos metade é sobre mechas.</b> O tráfego pago segue fora do app.</p>
+    <p>O app sugere <b>o que gravar e postar</b> — não precisa marcar nada. Por semana: <b>2 reels</b> (gravados quando aparecer a cliente certa e editados e postados pela Patrícia (editora e social media) em até 3 dias), <b>1 carrossel</b> na sexta e <b>stories todos os dias</b>, na hora e sem edição. <b>Pelo menos metade é sobre mechas.</b> O tráfego pago segue fora do app.</p>
   </div>
 
   <main>
@@ -578,7 +578,7 @@ function buildBriefing(p){
   if(p.roteiro)txt+=`\n--- ROTEIRO JÁ GERADO PELA IA (ajuste se quiser) ---\n${p.roteiro}\n`;
   const past=(S.history||[]).flatMap(h=>h.posts||[]).filter(x=>x.obs&&x.tema&&p.tema&&x.tema.split(' ')[0]===p.tema.split(' ')[0]);
   if(past.length)txt+=`OBSERVAÇÕES ANTERIORES: ${past.map(x=>x.obs).join(' | ')}\n`;
-  txt+=`\nCONTEXTO PARA A CLAUDIA:\n• Salão de Beleza MK — logo MK♡ (sem "Michele Krasniak"), paleta marrom/nude\n• Voz da Michele em 1ª pessoa, tom casual e caloroso\n• Sempre "mais bonita", nunca "linda"; nada que sugira agenda vazia\n• Equipe atual: Michele, Jihad, Camile e Cleia\n• Legendas obrigatórias\n• CTA: avaliação gratuita · wa.me/5547992660103 · @michelekrasniakbc\n• ${reels?'Gravação no meio de um atendimento real, quando aparecer a cliente certa (Jihad e Camile); o editor terceiro edita em até 3 dias':'Jihad e Camile separam as fotos; a arte do carrossel é montada no Canva'}\n\nPeça à ClaudIA: ${reels?'gancho (0-3s) + desenvolvimento + CTA + legenda + hashtags, uma lista curta de tomadas simples para gravar durante o atendimento e orientações de edição para o editor terceiro':'roteiro de slides (capa + desenvolvimento + CTA) + legenda + hashtags'}.`;
+  txt+=`\nCONTEXTO PARA A CLAUDIA:\n• Salão de Beleza MK — logo MK♡ (sem "Michele Krasniak"), paleta marrom/nude\n• Voz da Michele em 1ª pessoa, tom casual e caloroso\n• Sempre "mais bonita", nunca "linda"; nada que sugira agenda vazia\n• Equipe atual: Michele, Jihad, Pati, Alison e Cleia\n• Legendas obrigatórias\n• CTA: avaliação gratuita · wa.me/5547992660103 · @michelekrasniakbc\n• ${reels?'Gravação no meio de um atendimento real, quando aparecer a cliente certa (Pati grava e envia o álbum à Patrícia); a Patrícia (editora e social media) edita em até 3 dias e posta':'Pati separa as fotos; a arte do carrossel é montada no Canva'}\n\nPeça à ClaudIA: ${reels?'gancho (0-3s) + desenvolvimento + CTA + legenda + hashtags, uma lista curta de tomadas simples para gravar durante o atendimento e orientações de edição para a Patrícia (editora e social media)':'roteiro de slides (capa + desenvolvimento + CTA) + legenda + hashtags'}.`;
   return txt;
 }
 
@@ -600,20 +600,20 @@ function renderHero(){
 /* v7: tarefas iguais do mesmo dia viram um card só (ex.: gravação em lote) */
 function lembretesHoje(){
   const d=today();const wd=d.getDay();const L=[];const d3=addDays(d,3);
-  if(wd<2){L.push(['🗓️','Salão fechado','Se ainda não fez, Michele e Camile geram a semana e os roteiros com IA.']);return L;}
-  L.push(['🎬','Teve a cliente certa hoje?',`Se uma cliente combinar com um dos reels abaixo, Jihad e Camile gravam e a Camile manda álbum + briefing ao editor no WhatsApp. Gravado hoje, fica pronto até ${DIAS[d3.getDay()].toLowerCase()} ${fmtShort(d3)}.`]);
-  if(wd===4||wd===6)L.push(['📲','Dia de reels no feed','Se o editor já entregou algum reels, poste hoje às 18h — pode ser um gravado na semana passada.']);
-  if(wd===3)L.push(['🖼️','Fotos do carrossel de sexta','Jihad e Camile separam as fotos; Michele e Camile montam a arte no Canva.']);
-  if(wd===4)L.push(['🖼️','Carrossel de sexta','Michele e Camile: arte pronta e agendada para sexta, 18h.']);
+  if(wd<2){L.push(['🗓️','Salão fechado','Se ainda não fez, Michele e Alison geram a semana e os roteiros com IA.']);return L;}
+  L.push(['🎬','Teve a cliente certa hoje?',`Se uma cliente combinar com um dos reels abaixo, a Pati grava e envia o álbum à Patrícia — o briefing ela vê direto no app. Gravado hoje, fica pronto até ${DIAS[d3.getDay()].toLowerCase()} ${fmtShort(d3)}.`]);
+  if(wd===4||wd===6)L.push(['📲','Dia de reels no feed','A Patrícia posta hoje às 18h o reels que já estiver editado — pode ser um gravado na semana passada.']);
+  if(wd===3)L.push(['🖼️','Fotos do carrossel de sexta','Pati separa as fotos; Michele e Alison montam a arte no Canva.']);
+  if(wd===4)L.push(['🖼️','Carrossel de sexta','Michele e Alison: arte pronta e agendada para sexta, 18h.']);
   if(wd===5)L.push(['🖼️','Carrossel vai ao ar às 18h','Lembre do repost nos stories.']);
-  if(wd===6)L.push(['✍️','Planejar a próxima semana','Michele e Camile: gerar a próxima semana e os roteiros com IA.']);
+  if(wd===6)L.push(['✍️','Planejar a próxima semana','Michele e Alison: gerar a próxima semana e os roteiros com IA.']);
   return L;
 }
 function storiesCard(st){
   const d=parse(st.date);
   return `<div class="task"><div class="ico">📱</div><div class="body">
     <div class="ttitle">${st.temas.length} temas para gravar na hora, sem edição</div>
-    <div class="tmeta"><span>👤 Jihad</span><span>📅 ${DIAS[d.getDay()]} ${fmtShort(d)}</span></div>
+    <div class="tmeta"><span>👤 Pati</span><span>📅 ${DIAS[d.getDay()]} ${fmtShort(d)}</span></div>
     <div class="glist">${st.temas.map(x=>`<div class="gline"><div class="gl"><div class="gt">${x.m?'💛 ':''}${x.t}</div>${x.como}</div></div>`).join('')}</div>
     <div class="tip">Celular na mão, na hora, sem edição — natural vale mais que perfeito. Texto, enquete e música do próprio Instagram bastam.</div>
   </div></div>`;
@@ -632,7 +632,7 @@ function itemCard(p){
     <div class="prow">
       <button class="btn" onclick="openEditPost('${p.id}')">✏️ Editar</button>
       ${p.roteiro?`<button class="btn primary" onclick="showRoteiro('${p.id}')">Ver roteiro</button>`:`<button class="btn ghost" onclick="openBriefing('${p.id}')">Briefing ClaudIA</button>`}
-      ${p.tipo==='reels'?`<button class="btn ghost" onclick="copiarBriefingReel('${p.id}')">Copiar para o editor</button>`:''}
+      ${p.tipo==='reels'?`<button class="btn ghost" onclick="copiarBriefingReel('${p.id}')">Copiar briefing</button>`:''}
     </div></div>`;
 }
 function renderHoje(){
@@ -695,13 +695,13 @@ function setAd(i,k,v){S.anuncios[i][k]=v;saveState();}
 function renderPlano(){
   const el=document.getElementById('v-plano');
   let h=`<div class="section-title">Como funciona</div><div class="fluxo">
-    <div class="fr"><div class="fd">Sábado</div><div class="fw"><b>Planejar a semana</b><small>Michele e Camile geram a próxima semana e os roteiros com IA</small></div></div>
-    <div class="fr"><div class="fd">Ter a Sáb</div><div class="fw"><b>Stories todos os dias</b><small>Jihad — 3 temas por dia, na hora, sem edição</small></div></div>
-    <div class="fr"><div class="fd">Cliente certa</div><div class="fw"><b>Gravar o reels</b><small>Jihad e Camile gravam durante o atendimento</small></div></div>
-    <div class="fr"><div class="fd">Mesmo dia</div><div class="fw"><b>Enviar ao editor</b><small>Camile — álbum + briefing (copiado do app) no WhatsApp</small></div></div>
-    <div class="fr"><div class="fd">Até 3 dias</div><div class="fw"><b>Edição</b><small>Editor terceiro devolve o reels pronto</small></div></div>
-    <div class="fr"><div class="fd">Qui ou Sáb</div><div class="fw"><b>Postar o reels, 18h</b><small>Jihad — pode ser na semana seguinte à gravação</small></div></div>
-    <div class="fr"><div class="fd">Sexta</div><div class="fw"><b>Carrossel, 18h</b><small>Fotos: Jihad e Camile · arte: Michele e Camile (Canva)</small></div></div>
+    <div class="fr"><div class="fd">Sábado</div><div class="fw"><b>Planejar a semana</b><small>Michele e Alison geram a próxima semana e os roteiros com IA</small></div></div>
+    <div class="fr"><div class="fd">Ter a Sáb</div><div class="fw"><b>Stories todos os dias</b><small>Pati — 3 temas por dia, na hora, sem edição</small></div></div>
+    <div class="fr"><div class="fd">Cliente certa</div><div class="fw"><b>Gravar o reels</b><small>Pati grava durante o atendimento</small></div></div>
+    <div class="fr"><div class="fd">Mesmo dia</div><div class="fw"><b>Enviar à Patrícia</b><small>Pati envia o álbum · o briefing a Patrícia vê no app</small></div></div>
+    <div class="fr"><div class="fd">Até 3 dias</div><div class="fw"><b>Edição</b><small>Patrícia edita o reels pelo briefing do app</small></div></div>
+    <div class="fr"><div class="fd">Qui ou Sáb</div><div class="fw"><b>Postar o reels, 18h</b><small>Patrícia (social media) — pode ser na semana seguinte à gravação</small></div></div>
+    <div class="fr"><div class="fd">Sexta</div><div class="fw"><b>Carrossel, 18h</b><small>Fotos: Pati · arte: Michele e Alison (Canva)</small></div></div>
     <div class="fr"><div class="fd">Sempre</div><div class="fw"><b>💛 Pelo menos 50% em mechas</b><small>2 de 3 posts e 2 de 3 temas de stories por dia</small></div></div>
   </div>`;
   h+=`<div class="section-title">Rotação de serviços</div><div class="legend">
@@ -741,7 +741,7 @@ function openEditPost(postId){
     <div class="field"><label>Objetivo</label><textarea id="ed_obj" rows="2">${esc(p.objetivo||OBJETIVO_PILAR[p.pilar]||'')}</textarea></div>
     ${reels?`<div class="field"><label>Cliente ideal para gravar</label><textarea id="ed_cli" rows="2">${esc(p.cliente||'')}</textarea></div>`:''}
     <div class="field"><label>Referência (link ou descrição)</label><textarea id="ed_ref" rows="2" placeholder="Ex.: link de um reels de referência · “transição no estalo”">${esc(p.referencia||'')}</textarea></div>
-    <div class="field"><label>${reels?'Orientações para o editor (vão no briefing)':'Orientações para a arte'}</label><textarea id="ed_ori" rows="2">${esc(p.orientacoes||'')}</textarea></div>
+    <div class="field"><label>${reels?'Orientações para a Patrícia (vão no briefing)':'Orientações para a arte'}</label><textarea id="ed_ori" rows="2">${esc(p.orientacoes||'')}</textarea></div>
     <button class="btn primary" style="width:100%;padding:13px" onclick="saveEditPost('${postId}')">Salvar</button>`;
   openModal();
 }
@@ -779,8 +779,8 @@ function obsFor(p){
   const past=(S.history||[]).flatMap(h=>h.posts||[]).filter(x=>x.obs&&x.tema&&x.tema.split(' ')[0]===p.tema.split(' ')[0]);
   return past.map(x=>x.obs).join(' | ');
 }
-const REGRAS_CURTAS='Marca: Salão de Beleza MK · equipe atual: Michele, Jihad, Camile e Cleia · sempre "mais bonita", nunca "linda" · tomadas simples, gravadas durante o atendimento';
-const CONTEXTO_IA='Salão de Beleza MK, em Balneário Camboriú (nunca "Estúdio de Beleza" nem "Salão Michele Krasniak"). Equipe atual: Michele Krasniak (dona e rosto principal), Jihad Bianchi e Cleia Lima; não cite ex-integrantes da equipe. Voz da Michele em 1ª pessoa, tom casual e caloroso. Sempre "mais bonita", nunca "linda". Nunca frases que sugiram agenda vazia. CTA: WhatsApp wa.me/5547992660103 e Instagram @michelekrasniakbc. Público: mulheres 28–60, Balneário Camboriú + 15 km. Serviço foco: mechas e loiros. Pelo menos metade do conteúdo é sobre mechas e loiros. Os reels são gravados durante atendimentos reais, quando aparece a cliente certa, e um editor terceiro edita em até 3 dias — prefira tomadas simples e curtas e inclua orientações de edição. Stories são instantâneos, sem edição.';
+const REGRAS_CURTAS='Marca: Salão de Beleza MK · equipe atual: Michele, Jihad, Pati e Cleia · sempre "mais bonita", nunca "linda" · tomadas simples, gravadas durante o atendimento';
+const CONTEXTO_IA='Salão de Beleza MK, em Balneário Camboriú (nunca "Estúdio de Beleza" nem "Salão Michele Krasniak"). Equipe atual: Michele Krasniak (dona e rosto principal), Jihad Bianchi, Pati (auxiliar de cabelos; não confundir com a Patrícia, editora e social media externa) e Cleia Lima; não cite ex-integrantes da equipe. Voz da Michele em 1ª pessoa, tom casual e caloroso. Sempre "mais bonita", nunca "linda". Nunca frases que sugiram agenda vazia. CTA: WhatsApp wa.me/5547992660103 e Instagram @michelekrasniakbc. Público: mulheres 28–60, Balneário Camboriú + 15 km. Serviço foco: mechas e loiros. Pelo menos metade do conteúdo é sobre mechas e loiros. Os reels são gravados durante atendimentos reais, quando aparece a cliente certa, e a Patrícia (editora e social media, externa) edita em até 3 dias e posta — prefira tomadas simples e curtas e inclua orientações de edição. Stories são instantâneos, sem edição.';
 function gerarRoteirosIA(){
   if(MODE!=='online'||!supa){iaSheet('<b>Precisa estar Sincronizado</b><br>Conecte-se (bolinha verde) para usar a IA.',[['Fechar','closeModal()']]);return;}
   if(!S.posts.length){iaSheet('Gere uma semana primeiro.',[['Fechar','closeModal()']]);return;}
