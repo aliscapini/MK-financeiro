@@ -2845,9 +2845,21 @@
     }
   }
 
+  function limparDadosLocais(){ Object.keys(KEYS).forEach(function(k){ try{ if(hasLS) localStorage.removeItem(KEYS[k]); }catch(e){} delete memStore[KEYS[k]]; }); }
   function entrarNoSistema(){
-    var tl=document.getElementById('tela-login'); if(tl) tl.style.display='none';
-    carregarDadosEIniciar();
+    function liberar(){ var tl=document.getElementById('tela-login'); if(tl) tl.style.display='none'; carregarDadosEIniciar(); }
+    if(!nuvemOn || !sb.rpc){ liberar(); return; }
+    sb.rpc('mk_tem_acesso',{area:'financeiro'}).then(function(res){
+      if(res && !res.error && res.data===false){
+        limparDadosLocais();
+        sb.auth.signOut().then(function(){
+          var tl=$('tela-login'); if(tl) tl.style.display='flex';
+          var er=$('login-erro'); if(er){ er.textContent='Este login não tem acesso ao Financeiro.'; er.style.display='block'; }
+        });
+        return;
+      }
+      liberar();
+    }, function(){ liberar(); });
   }
 
   // ===== LOGIN =====
