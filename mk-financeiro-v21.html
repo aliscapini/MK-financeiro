@@ -1745,8 +1745,11 @@
       var cls=load(KEYS.clientes);
       var porTel={}, porNome={};
       cls.forEach(function(c){ var d=soDigitos(c.telefone); if(telValido(d)) porTel[d]=c; var n=normNome(c.nome); if(n) (porNome[n]=porNome[n]||[]).push(c); });
-      var plano={atualizar:[],novas:[],jaOk:0,ignoradas:0};
+      var plano={atualizar:[],novas:[],jaOk:0,ignoradas:0,mesclar:[]};
+      var porId={}; cls.forEach(function(c){ porId[c.id]=c; });
       linhas.forEach(function(l){
+        if(l.ids_financeiro){ var ids=l.ids_financeiro.split(/\s+/).filter(function(x){ return porId[x]; });
+          if(ids.length){ plano.mesclar.push({ids:ids,linha:l}); return; } }
         var d=soDigitos(l.telefone), n=normNome(l.nome);
         if(/mudou de cidade/i.test(l.perfil||'')){ plano.ignoradas++; return; }
         var ex=(telValido(d)&&porTel[d]) || (n && porNome[n] && porNome[n].length===1 ? porNome[n][0] : null);
@@ -1756,9 +1759,14 @@
       });
       _importPlano=plano;
       var tel=plano.atualizar.filter(function(x){return x.preencheTel;}).length;
+      var mTel=plano.mesclar.filter(function(m){ return telValido(soDigitos(m.linha.telefone)); }).length;
+      var mUnir=plano.mesclar.filter(function(m){ return m.ids.length>1; });
+      var mCad=mUnir.reduce(function(a,m){ return a+m.ids.length; },0);
       $('import-base-resumo').innerHTML=
         '<div style="font-size:13px;line-height:1.9">'+
         '<div>📄 Linhas no arquivo: <strong>'+linhas.length+'</strong></div>'+
+        (plano.mesclar.length?'<div>✅ Revisadas por você: <strong>'+plano.mesclar.length+'</strong> ('+mTel+' ganham telefone)</div>'+
+          '<div>🧩 Cadastros repetidos que viram um só: <strong>'+mCad+'</strong> cadastros → <strong>'+mUnir.length+'</strong> clientes</div>':'')+
         '<div>🔗 Já estão no sistema: <strong>'+plano.atualizar.length+'</strong> ('+tel+' vão ganhar telefone)</div>'+
         '<div>➕ Ainda não estão no sistema: <strong>'+plano.novas.length+'</strong></div>'+
         '<div class="text-muted">Ignoradas (sem telefone válido ou mudaram de cidade): '+plano.ignoradas+'</div></div>';
@@ -1774,12 +1782,33 @@
   function confirmaImportBase(){
     var p=_importPlano; if(!p) return;
     var cls=load(KEYS.clientes), map={}; cls.forEach(function(c){ map[c.id]=c; });
+    var coms=load(KEYS.comandas), rlog=load(KEYS.retornos);
+    syncUp('mk_bkp_import_'+todayISO(), {clientes:cls, comandas:coms, retornos:rlog, em:new Date().toISOString()});
+    var remover={};
+    (p.mesclar||[]).forEach(function(m){
+      var prim=map[m.ids[0]]; if(!prim) return; var l=m.linha, d=soDigitos(l.telefone);
+      m.ids.slice(1).forEach(function(oid){ var o=map[oid]; if(!o) return;
+        prim.visitas=(prim.visitas||0)+(o.visitas||0);
+        if(!prim.aniversario&&o.aniversario) prim.aniversario=o.aniversario; if(!prim.instagram&&o.instagram) prim.instagram=o.instagram;
+        if(o.obs && (prim.obs||'').indexOf(o.obs)<0) prim.obs=(prim.obs?prim.obs+' · ':'')+o.obs;
+        if(!telValido(soDigitos(prim.telefone)) && telValido(soDigitos(o.telefone))) prim.telefone=o.telefone;
+        remover[oid]=prim.id; });
+      if(telValido(d) && !telValido(soDigitos(prim.telefone))) prim.telefone=fmtTel(d);
+      if(l.categoria) prim.kommo=kommoInfo(l);
+    });
+    if(Object.keys(remover).length){
+      coms.forEach(function(c){ var nid=remover[c.clienteId]; if(nid){ c.clienteId=nid; c.clienteNome=map[nid].nome; } });
+      rlog.forEach(function(r){ var nid=remover[r.clienteId]; if(nid) r.clienteId=nid; });
+      cls=cls.filter(function(c){ return !remover[c.id]; });
+      save(KEYS.comandas,coms); save(KEYS.retornos,rlog);
+    }
     p.atualizar.forEach(function(u){ var c=map[u.id]; if(!c) return; if(u.preencheTel) c.telefone=fmtTel(soDigitos(u.linha.telefone)); c.kommo=kommoInfo(u.linha); });
     var nNovas=0;
     if($('import-base-novas').checked){ p.novas.forEach(function(l){ cls.push({id:genId(),nome:l.nome,telefone:fmtTel(soDigitos(l.telefone)),aniversario:'',instagram:'',obs:'',visitas:0,kommo:kommoInfo(l)}); nNovas++; }); }
     save(KEYS.clientes,cls); closeModal('modal-import-base'); _importPlano=null;
     renderClientes(); refreshComandaClientes();
-    showToast(p.atualizar.length+' cliente(s) atualizada(s) e '+nNovas+' nova(s)');
+    showToast(((p.mesclar||[]).length+p.atualizar.length)+' cliente(s) atualizada(s), '+Object.keys(remover).length+' cadastro(s) repetido(s) unido(s) e '+nNovas+' nova(s)');
+    if($('page-comandas').classList.contains('active')) renderComandas();
   }
 
   // ===== RETORNOS DO DIA =====
