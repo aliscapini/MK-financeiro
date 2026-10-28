@@ -1745,9 +1745,11 @@
       var cls=load(KEYS.clientes);
       var porTel={}, porNome={};
       cls.forEach(function(c){ var d=soDigitos(c.telefone); if(telValido(d)) porTel[d]=c; var n=normNome(c.nome); if(n) (porNome[n]=porNome[n]||[]).push(c); });
-      var plano={atualizar:[],novas:[],jaOk:0,ignoradas:0,mesclar:[]};
+      var plano={atualizar:[],novas:[],jaOk:0,ignoradas:0,mesclar:[],excluir:[]};
+      var comPorCli={}; load(KEYS.comandas).forEach(function(c){ if(c.clienteId) comPorCli[c.clienteId]=1; });
       var porId={}; cls.forEach(function(c){ porId[c.id]=c; });
       linhas.forEach(function(l){
+        if(l.ids_financeiro && /^s/i.test(l.excluir||'')){ l.ids_financeiro.split(/\s+/).forEach(function(x){ if(porId[x] && !comPorCli[x]) plano.excluir.push(x); }); return; }
         if(l.ids_financeiro){ var ids=l.ids_financeiro.split(/\s+/).filter(function(x){ return porId[x]; });
           if(ids.length){ plano.mesclar.push({ids:ids,linha:l}); return; } }
         var d=soDigitos(l.telefone), n=normNome(l.nome);
@@ -1767,6 +1769,7 @@
         '<div>📄 Linhas no arquivo: <strong>'+linhas.length+'</strong></div>'+
         (plano.mesclar.length?'<div>✅ Revisadas por você: <strong>'+plano.mesclar.length+'</strong> ('+mTel+' ganham telefone)</div>'+
           '<div>🧩 Cadastros repetidos que viram um só: <strong>'+mCad+'</strong> cadastros → <strong>'+mUnir.length+'</strong> clientes</div>':'')+
+        (plano.excluir.length?'<div>🗑️ Contatos que serão apagados (sem nenhuma comanda): <strong>'+plano.excluir.length+'</strong></div>':'')+
         '<div>🔗 Já estão no sistema: <strong>'+plano.atualizar.length+'</strong> ('+tel+' vão ganhar telefone)</div>'+
         '<div>➕ Ainda não estão no sistema: <strong>'+plano.novas.length+'</strong></div>'+
         '<div class="text-muted">Ignoradas (sem telefone válido ou mudaram de cidade): '+plano.ignoradas+'</div></div>';
@@ -1796,8 +1799,10 @@
       if(telValido(d) && !telValido(soDigitos(prim.telefone))) prim.telefone=fmtTel(d);
       if(l.categoria) prim.kommo=kommoInfo(l);
     });
+    var nExcl=0; (p.excluir||[]).forEach(function(x){ if(map[x] && !remover[x]){ remover[x]='__excluir__'; nExcl++; } });
     if(Object.keys(remover).length){
-      coms.forEach(function(c){ var nid=remover[c.clienteId]; if(nid){ c.clienteId=nid; c.clienteNome=map[nid].nome; } });
+      coms.forEach(function(c){ var nid=remover[c.clienteId]; if(nid && nid!=='__excluir__'){ c.clienteId=nid; c.clienteNome=map[nid].nome; } });
+      rlog=rlog.filter(function(r){ return remover[r.clienteId]!=='__excluir__'; });
       rlog.forEach(function(r){ var nid=remover[r.clienteId]; if(nid) r.clienteId=nid; });
       cls=cls.filter(function(c){ return !remover[c.id]; });
       save(KEYS.comandas,coms); save(KEYS.retornos,rlog);
@@ -1807,7 +1812,7 @@
     if($('import-base-novas').checked){ p.novas.forEach(function(l){ cls.push({id:genId(),nome:l.nome,telefone:fmtTel(soDigitos(l.telefone)),aniversario:'',instagram:'',obs:'',visitas:0,kommo:kommoInfo(l)}); nNovas++; }); }
     save(KEYS.clientes,cls); closeModal('modal-import-base'); _importPlano=null;
     renderClientes(); refreshComandaClientes();
-    showToast(((p.mesclar||[]).length+p.atualizar.length)+' cliente(s) atualizada(s), '+Object.keys(remover).length+' cadastro(s) repetido(s) unido(s) e '+nNovas+' nova(s)');
+    showToast(((p.mesclar||[]).length+p.atualizar.length)+' cliente(s) atualizada(s), '+(Object.keys(remover).length-nExcl)+' cadastro(s) repetido(s) unido(s), '+nNovas+' nova(s)'+(nExcl?' e '+nExcl+' apagado(s)':''));
     if($('page-comandas').classList.contains('active')) renderComandas();
   }
 
