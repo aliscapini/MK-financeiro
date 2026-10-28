@@ -132,8 +132,8 @@
   .chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: var(--offwhite); border: 1px solid var(--borda); border-radius: 20px; font-size: 11px; color: var(--marrom-escuro); }
   .chip-remove { cursor: pointer; color: var(--marrom); font-size: 13px; line-height: 1; }
   .cli-busca-wrap { position: relative; }
-  .cli-sugestoes { position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: var(--branco); border: 1px solid var(--borda); border-radius: 6px; box-shadow: 0 8px 24px rgba(45,36,32,0.12); margin-top: 4px; max-height: 280px; overflow-y: auto; }
-  .cli-sug { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--offwhite); font-size: 13px; }
+  .cli-sugestoes { position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: var(--branco); border: 1px solid var(--borda); border-radius: 6px; box-shadow: 0 8px 24px rgba(45,36,32,0.12); margin-top: 4px; max-height: min(280px, 45vh); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .cli-sug { padding: 12px 12px; touch-action: manipulation; cursor: pointer; border-bottom: 1px solid var(--offwhite); font-size: 13px; }
   .cli-sug:hover, .cli-sug.ativa { background: var(--offwhite); }
   .cli-sug small { display: block; color: rgba(45,36,32,0.55); font-size: 11px; margin-top: 2px; }
   .cli-sug.nova { color: var(--marrom); font-weight: 500; }
@@ -820,7 +820,7 @@
         <select class="form-select" id="com-cliente" style="display:none"><option value="">Selecione ou deixe em branco...</option></select>
         <input type="hidden" id="com-cliente-novo">
         <div class="cli-busca-wrap">
-          <input type="text" class="form-input" id="com-cli-busca" placeholder="Digite o nome ou o telefone da cliente..." autocomplete="off">
+          <input type="text" class="form-input" id="com-cli-busca" placeholder="Digite o nome ou o telefone da cliente..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
           <div id="com-cli-sugestoes" class="cli-sugestoes" style="display:none"></div>
         </div>
         <div id="com-cli-escolhida" class="cli-escolhida" style="display:none"></div>
@@ -2652,7 +2652,20 @@
     if(t.id==='com-cli-busca'){ renderCliSugestoes(); return; }
   });
 
-  document.addEventListener('focusin', function(e){ if(e.target.id==='com-cli-busca' && e.target.value) renderCliSugestoes(); });
+  document.addEventListener('focusin', function(e){ if(e.target.id==='com-cli-busca'){ if(e.target.value) renderCliSugestoes(); setTimeout(function(){ try{ e.target.scrollIntoView({block:'start',behavior:'smooth'}); }catch(x){} },250); } });
+  // seleciona no toque (antes do teclado fechar e a tela pular), funciona no celular
+  var _cliTocou=0;
+  document.addEventListener('pointerdown', function(e){
+    var sug=e.target.closest('[data-cli-sug]'), nova=e.target.closest('[data-cli-nova]'); if(!sug&&!nova) return;
+    _cliTocou={x:e.clientX,y:e.clientY,el:sug||nova,t:Date.now()};
+  });
+  document.addEventListener('pointerup', function(e){
+    var t=_cliTocou; _cliTocou=0; if(!t) return;
+    if(Math.abs(e.clientX-t.x)>10||Math.abs(e.clientY-t.y)>10) return; // foi rolagem da lista, não toque
+    e.preventDefault();
+    if(t.el.hasAttribute('data-cli-sug')){ var xs=_cliSug[+t.el.getAttribute('data-cli-sug')]; if(xs) escolherCliente(xs.c); }
+    else escolherNovaCliente();
+  });
   document.addEventListener('keydown', function(e){
     if(e.target.id!=='com-cli-busca') return;
     var itens=document.querySelectorAll('#com-cli-sugestoes .cli-sug[data-cli-sug], #com-cli-sugestoes .cli-sug[data-cli-nova]'); if(!itens.length) return;
