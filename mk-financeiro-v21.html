@@ -131,6 +131,13 @@
   .chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: var(--offwhite); border: 1px solid var(--borda); border-radius: 20px; font-size: 11px; color: var(--marrom-escuro); }
   .chip-remove { cursor: pointer; color: var(--marrom); font-size: 13px; line-height: 1; }
+  .cli-busca-wrap { position: relative; }
+  .cli-sugestoes { position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: var(--branco); border: 1px solid var(--borda); border-radius: 6px; box-shadow: 0 8px 24px rgba(45,36,32,0.12); margin-top: 4px; max-height: 280px; overflow-y: auto; }
+  .cli-sug { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--offwhite); font-size: 13px; }
+  .cli-sug:hover, .cli-sug.ativa { background: var(--offwhite); }
+  .cli-sug small { display: block; color: rgba(45,36,32,0.55); font-size: 11px; margin-top: 2px; }
+  .cli-sug.nova { color: var(--marrom); font-weight: 500; }
+  .cli-escolhida { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #f4ece6; border-radius: 6px; padding: 9px 12px; font-size: 13px; margin-top: 6px; }
   .info-box { background: #f4ece6; border-left: 3px solid var(--nude); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 12px; color: var(--marrom-escuro); margin-top: 8px; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
@@ -810,8 +817,13 @@
     <div class="form-row">
       <div class="form-group"><label class="form-label">Data do atendimento *</label><input type="date" class="form-input" id="com-data"></div>
       <div class="form-group"><label class="form-label">Cliente</label>
-        <select class="form-select" id="com-cliente"><option value="">Selecione ou deixe em branco...</option></select>
-        <input type="text" class="form-input" id="com-cliente-novo" placeholder="ou digite o nome de uma nova cliente" style="margin-top:6px">
+        <select class="form-select" id="com-cliente" style="display:none"><option value="">Selecione ou deixe em branco...</option></select>
+        <input type="hidden" id="com-cliente-novo">
+        <div class="cli-busca-wrap">
+          <input type="text" class="form-input" id="com-cli-busca" placeholder="Digite o nome ou o telefone da cliente..." autocomplete="off">
+          <div id="com-cli-sugestoes" class="cli-sugestoes" style="display:none"></div>
+        </div>
+        <div id="com-cli-escolhida" class="cli-escolhida" style="display:none"></div>
         <div id="com-tel-wrap" style="display:none;margin-top:6px">
           <input type="tel" class="form-input" id="com-cliente-tel" placeholder="WhatsApp da cliente: (47) 99999-9999">
           <div class="text-muted" id="com-tel-hint" style="font-size:11px;margin-top:3px">Obrigatório para cliente nova: é por ele que ela entra nos retornos.</div>
@@ -1353,8 +1365,11 @@
         '<button class="btn btn-sm btn-danger" data-action="del-cli" data-id="'+c.id+'">Excluir</button></div></td></tr>';
     }).join('');
   }
-  function saveCliente(){
+  function saveCliente(forcar){
     var id=val('cli-edit-id'),nome=val('cli-nome'); if(!nome){ showToast('Informe o nome da cliente'); return; }
+    if(!id && forcar!==true){ var td=soDigitos(val('cli-telefone')), nn=normNome(nome);
+      var parecida=load(KEYS.clientes).filter(function(c){ return (td && telValido(td) && soDigitos(c.telefone)===td) || normNome(c.nome)===nn; })[0];
+      if(parecida){ askConfirm('Já existe a cliente "'+parecida.nome+'"'+(parecida.telefone?' ('+parecida.telefone+')':'')+'. Cadastrar mesmo assim?', function(){ saveCliente(true); }, 'Cadastrar mesmo assim'); return; } }
     var data=load(KEYS.clientes); var ex=id?data.filter(function(c){return c.id===id;})[0]:null;
     var obj={id:id||genId(),nome:nome,telefone:val('cli-telefone'),aniversario:val('cli-aniversario'),instagram:val('cli-instagram'),obs:val('cli-obs'),visitas:ex?ex.visitas:0};
     if(id){for(var i=0;i<data.length;i++)if(data[i].id===id)data[i]=obj;}else data.push(obj);
@@ -1437,7 +1452,7 @@
 
   function novaComanda(origem){
     comServLines=[]; comProdLines=[]; comPagLines=[];
-    setVal('com-edit-id',''); setVal('com-data',todayISO()); setVal('com-cliente',''); setVal('com-cliente-novo',''); setVal('com-cliente-tel',''); atualizarCampoTel();
+    setVal('com-edit-id',''); setVal('com-data',todayISO()); setVal('com-cliente',''); setVal('com-cliente-novo',''); setVal('com-cliente-tel',''); limparCliBusca(); atualizarCampoTel();
     $('com-foto-area').style.display = origem==='foto'?'block':'none';
     $('modal-com-title').textContent = origem==='foto'?'Nova Comanda (por foto)':'Nova Comanda';
     refreshComandaClientes();
@@ -1541,6 +1556,7 @@
 
     // cliente
     var cliId=val('com-cliente'); var cliNovo=val('com-cliente-novo'); var cliNome='';
+    if(val('com-cli-busca') && !val('com-cliente') && !val('com-cliente-novo')){ showToast('Escolha a cliente na lista ou toque em "Cadastrar nova cliente"'); return; }
     var telDig=soDigitos(val('com-cliente-tel'));
     if(cliNovo && !telValido(telDig)){ showToast('Informe o WhatsApp da cliente nova (DDD + número)'); var ti=$('com-cliente-tel'); if(ti) ti.focus(); return; }
     if(!cliNovo && telDig && !telValido(telDig)){ showToast('Telefone incompleto: confira o DDD e o número'); return; }
@@ -1656,6 +1672,51 @@
     if(sel){ var c=load(KEYS.clientes).filter(function(x){return x.id===sel;})[0];
       if(c && !telValido(soDigitos(c.telefone))){ wrap.style.display='block'; hint.textContent='Essa cliente está sem telefone. Se tiver, preencha aqui.'; return; } }
     wrap.style.display='none';
+  }
+
+  // ===== BUSCA DE CLIENTE NA COMANDA =====
+  var _cliSug=[], _cliSugIdx=-1;
+  function ultimaVisitaMap(){ var m={}; load(KEYS.comandas).forEach(function(c){ if(c.clienteId && (!m[c.clienteId]||c.data>m[c.clienteId])) m[c.clienteId]=c.data; }); return m; }
+  function buscarClientes(q){
+    var qn=normNome(q), qd=String(q||'').replace(/\D/g,''); if(!qn && qd.length<3) return [];
+    var toks=qn.split(' ').filter(Boolean), ult=ultimaVisitaMap();
+    return load(KEYS.clientes).map(function(c){
+      var n=normNome(c.nome), nt=n.split(' '), sc=0;
+      if(qd.length>=3 && soDigitos(c.telefone).indexOf(qd)>=0) sc=3;
+      else if(toks.length && toks.every(function(t){ return nt.some(function(w){ return w.indexOf(t)===0; }); })) sc = n.indexOf(qn)===0 ? 2 : 1;
+      return {c:c,sc:sc,ult:ult[c.id]||''};
+    }).filter(function(x){ return x.sc>0; })
+      .sort(function(a,b){ return b.sc-a.sc || (b.ult||'').localeCompare(a.ult||'') || (b.c.visitas||0)-(a.c.visitas||0); }).slice(0,8);
+  }
+  function renderCliSugestoes(){
+    var q=val('com-cli-busca'), box=$('com-cli-sugestoes');
+    if(!q){ box.style.display='none'; return; }
+    _cliSug=buscarClientes(q); _cliSugIdx=-1;
+    var html=_cliSug.map(function(x,i){ var c=x.c;
+      return '<div class="cli-sug" data-cli-sug="'+i+'"><strong>'+esc(c.nome)+'</strong><small>'+(telValido(soDigitos(c.telefone))?esc(c.telefone):'sem telefone')+' · '+(c.visitas||0)+' visita(s)'+(x.ult?' · última em '+fmtData(x.ult):'')+'</small></div>'; }).join('');
+    if(!_cliSug.length) html='<div class="cli-sug" style="cursor:default;color:rgba(45,36,32,0.5)">Nenhuma cliente encontrada com "'+esc(q)+'"</div>';
+    html+='<div class="cli-sug nova" data-cli-nova="1">+ Cadastrar nova cliente: "'+esc(q)+'"'+(_cliSug.length?'<small>Só use se ela não estiver na lista acima</small>':'')+'</div>';
+    box.innerHTML=html; box.style.display='block';
+  }
+  function escolherCliente(c){
+    setVal('com-cliente',c.id); setVal('com-cliente-novo',''); setVal('com-cli-busca','');
+    $('com-cli-sugestoes').style.display='none'; $('com-cli-busca').style.display='none';
+    var ch=$('com-cli-escolhida'); ch.innerHTML='<span>✓ <strong>'+esc(c.nome)+'</strong>'+(telValido(soDigitos(c.telefone))?' · '+esc(c.telefone):'')+'</span><button class="btn btn-sm btn-ghost" data-action="cli-trocar">Trocar</button>'; ch.style.display='flex';
+    atualizarCampoTel();
+  }
+  function escolherNovaCliente(){
+    var nome=val('com-cli-busca').replace(/\s+/g,' ').trim(); if(!nome) return;
+    nome=nome.split(' ').map(function(w){ return w.length>2? w.charAt(0).toUpperCase()+w.substr(1).toLowerCase() : w.toLowerCase(); }).join(' ');
+    nome=nome.charAt(0).toUpperCase()+nome.substr(1);
+    setVal('com-cliente',''); setVal('com-cliente-novo',nome); setVal('com-cli-busca','');
+    $('com-cli-sugestoes').style.display='none'; $('com-cli-busca').style.display='none';
+    var ch=$('com-cli-escolhida'); ch.innerHTML='<span>➕ Nova cliente: <strong>'+esc(nome)+'</strong></span><button class="btn btn-sm btn-ghost" data-action="cli-trocar">Trocar</button>'; ch.style.display='flex';
+    atualizarCampoTel(); var t=$('com-cliente-tel'); if(t) t.focus();
+  }
+  function limparCliBusca(){
+    setVal('com-cli-busca',''); var b=$('com-cli-busca'); if(b) b.style.display='';
+    var s=$('com-cli-sugestoes'); if(s) s.style.display='none';
+    var ch=$('com-cli-escolhida'); if(ch){ ch.style.display='none'; ch.innerHTML=''; }
   }
 
   // ===== IMPORTAR BASE (CSV do Kommo) =====
@@ -2440,6 +2501,9 @@
     var ctab=e.target.closest('.tab[data-ctab]'); if(ctab){ switchCtab(ctab.getAttribute('data-ctab')); return; }
     var rtab=e.target.closest('.tab[data-rtab]'); if(rtab){ switchRtab(rtab.getAttribute('data-rtab')); return; }
     var ptab=e.target.closest('.tab[data-ptab]'); if(ptab){ switchPtab(ptab.getAttribute('data-ptab')); return; }
+    var sug=e.target.closest('[data-cli-sug]'); if(sug){ var xs=_cliSug[+sug.getAttribute('data-cli-sug')]; if(xs) escolherCliente(xs.c); return; }
+    var sn=e.target.closest('[data-cli-nova]'); if(sn){ escolherNovaCliente(); return; }
+    if(!e.target.closest('.cli-busca-wrap')){ var sb=$('com-cli-sugestoes'); if(sb) sb.style.display='none'; }
     var el=e.target.closest('[data-action]'); if(!el) return;
     var a=el.getAttribute('data-action'), id=el.getAttribute('data-id'), target=el.getAttribute('data-target'), idx=el.getAttribute('data-idx');
     switch(a){
@@ -2504,6 +2568,7 @@
       case 'confirma-repasse': confirmaRepasse(); break;
       case 'del-repasse': deleteRepasse(id); break;
       case 'importar-base': abrirImportBase(); break;
+      case 'cli-trocar': setVal('com-cliente',''); setVal('com-cliente-novo',''); setVal('com-cliente-tel',''); limparCliBusca(); atualizarCampoTel(); $('com-cli-busca').focus(); break;
       case 'confirma-import-base': confirmaImportBase(); break;
       case 'ret-enviar': retornoEnviar(id); break;
       case 'ret-pular': retornoPular(id); break;
@@ -2550,7 +2615,17 @@
     if(t.id==='search-produtos'){ renderProdutos(t.value,val('filter-produtos-tipo')); return; }
     if(t.id==='search-clientes'){ renderClientes(t.value); return; }
     if(t.id==='search-comandas'){ renderComandas(); return; }
-    if(t.id==='com-cliente-novo'){ atualizarCampoTel(); return; }
+    if(t.id==='com-cli-busca'){ renderCliSugestoes(); return; }
+  });
+
+  document.addEventListener('focusin', function(e){ if(e.target.id==='com-cli-busca' && e.target.value) renderCliSugestoes(); });
+  document.addEventListener('keydown', function(e){
+    if(e.target.id!=='com-cli-busca') return;
+    var itens=document.querySelectorAll('#com-cli-sugestoes .cli-sug[data-cli-sug], #com-cli-sugestoes .cli-sug[data-cli-nova]'); if(!itens.length) return;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); _cliSugIdx=(_cliSugIdx+(e.key==='ArrowDown'?1:-1)+itens.length)%itens.length;
+      for(var i=0;i<itens.length;i++) itens[i].classList.toggle('ativa',i===_cliSugIdx); }
+    else if(e.key==='Enter'){ e.preventDefault(); var it=itens[_cliSugIdx>=0?_cliSugIdx:0]; if(it) it.click(); }
+    else if(e.key==='Escape'){ $('com-cli-sugestoes').style.display='none'; }
   });
 
   // overlays close
