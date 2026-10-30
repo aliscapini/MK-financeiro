@@ -647,6 +647,7 @@
     <div class="tabs">
       <div class="tab active" data-ptab="apagar">A Pagar</div>
       <div class="tab" data-ptab="pagas">Pagas</div>
+      <div class="tab" data-ptab="saidas">Todas as saídas</div>
     </div>
 
     <div id="ptab-apagar" class="ptab-content">
@@ -669,6 +670,27 @@
         <table><thead><tr><th>Pago em</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Valor</th><th></th></tr></thead>
         <tbody id="tbody-contas-pagas"></tbody></table>
         <div id="empty-contas-pagas" class="empty-state"><div class="empty-sub">Nenhuma conta paga no período</div></div>
+      </div>
+      <div class="info-box" style="margin-top:12px">Aqui aparecem só as <strong>contas a pagar</strong> que foram pagas. Saídas lançadas direto no Caixa e comissões ficam na aba <strong>Todas as saídas</strong>, que é o que entra no DRE.</div>
+    </div>
+
+    <div id="ptab-saidas" class="ptab-content" style="display:none">
+      <div class="search-bar">
+        <input type="date" class="form-select" id="ct-sd-ini" style="width:160px">
+        <span class="text-muted">até</span>
+        <input type="date" class="form-select" id="ct-sd-fim" style="width:160px">
+        <select class="form-select" id="ct-sd-tipo" style="width:180px"><option value="">Todas</option><option value="conta">Contas pagas</option><option value="avulsa">Lançadas no Caixa</option><option value="repasse">Comissões</option></select>
+      </div>
+      <div class="stat-cards cols-4" style="margin-bottom:12px">
+        <div class="stat-card"><div class="stat-label">Total no período (entra no DRE)</div><div class="stat-value sm" id="ct-sd-total">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Contas pagas</div><div class="stat-value sm" id="ct-sd-conta">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Lançadas no Caixa</div><div class="stat-value sm" id="ct-sd-avulsa">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Comissões</div><div class="stat-value sm" id="ct-sd-repasse">R$ 0,00</div></div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Valor</th><th></th></tr></thead>
+        <tbody id="tbody-contas-saidas"></tbody></table>
+        <div id="empty-contas-saidas" class="empty-state"><div class="empty-sub">Nenhuma saída no período</div></div>
       </div>
     </div>
   </div>
@@ -882,8 +904,10 @@
 
 <!-- ===== MODAL SAÍDA ===== -->
 <div class="modal-overlay" id="modal-saida"><div class="modal">
-  <div class="modal-header"><div class="modal-title">Nova Saída de Caixa</div><button class="modal-close" data-action="close" data-target="modal-saida">×</button></div>
+  <div class="modal-header"><div class="modal-title" id="modal-saida-title">Nova Saída de Caixa</div><button class="modal-close" data-action="close" data-target="modal-saida">×</button></div>
   <div class="modal-body">
+    <input type="hidden" id="saida-edit-id">
+    <div class="form-row single" id="saida-data-row" style="display:none"><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-input" id="saida-data"></div></div>
     <div class="form-row single"><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-input" id="saida-desc" placeholder="Ex: Compra de material, sangria, vale"></div></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Valor (R$) *</label><input type="number" step="0.01" class="form-input" id="saida-valor" placeholder="0,00"></div>
@@ -891,7 +915,7 @@
     </div>
     <div class="form-row single"><div class="form-group"><label class="form-label">Categoria (plano de contas)</label><select class="form-select" id="saida-categoria"></select></div></div>
   </div>
-  <div class="modal-footer"><button class="btn btn-outline" data-action="close" data-target="modal-saida">Cancelar</button><button class="btn btn-primary" data-action="save-saida">Lançar saída</button></div>
+  <div class="modal-footer"><button class="btn btn-outline" data-action="close" data-target="modal-saida">Cancelar</button><button class="btn btn-primary" data-action="save-saida" id="saida-save-btn">Lançar saída</button></div>
 </div></div>
 
 <!-- ===== MODAL CONFIG TAXAS ===== -->
@@ -956,7 +980,18 @@
       <div class="form-group"><label class="form-label">Fornecedor</label><input type="text" class="form-input" id="nc-fornecedor" placeholder="Opcional"></div>
       <div class="form-group"><label class="form-label">Categoria (despesa)</label><select class="form-select" id="nc-categoria"></select></div>
     </div>
-    <div class="form-row single" style="margin-top:4px">
+    <div class="form-row" id="nc-pago-row" style="display:none">
+      <div class="form-group"><label class="form-label">Pago em</label><input type="date" class="form-input" id="nc-pagamento"></div>
+      <div class="form-group"><label class="form-label">Forma</label><select class="form-select" id="nc-forma"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="debito">Cartão Débito</option><option value="credito">Cartão Crédito</option></select></div>
+    </div>
+    <div class="form-row single" id="nc-futuras-row" style="display:none">
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--marrom-escuro)">
+          <input type="checkbox" id="nc-futuras" style="width:16px;height:16px"> Aplicar também aos próximos meses desta conta fixa (descrição, fornecedor, valor e categoria)
+        </label>
+      </div>
+    </div>
+    <div class="form-row single" style="margin-top:4px" id="nc-recorrente-row">
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--marrom-escuro)">
           <input type="checkbox" id="nc-recorrente" style="width:16px;height:16px"> Repetir todo mês (conta fixa)
@@ -2102,20 +2137,62 @@
 
   function isFechado(data){ return load(KEYS.fechamentos).some(function(f){return f.data===data;}); }
 
-  function novaSaida(){
+  function opcoesCategoriaDespesa(atual){
     var leaves=planoLeaves('despesa');
-    $('saida-categoria').innerHTML='<option value="">Selecione...</option>'+leaves.map(function(c){return '<option value="'+esc(c.nome)+'">'+esc(c.num)+' '+esc(c.path)+'</option>';}).join('');
+    var h='<option value="">Selecione...</option>'+leaves.map(function(c){return '<option value="'+esc(c.nome)+'">'+esc(c.num)+' '+esc(c.path)+'</option>';}).join('');
+    if(atual && !leaves.some(function(c){return c.nome===atual;})) h+='<option value="'+esc(atual)+'">'+esc(atual)+'</option>';
+    return h;
+  }
+  function novaSaida(){
+    $('saida-categoria').innerHTML=opcoesCategoriaDespesa();
+    setVal('saida-edit-id',''); $('saida-data-row').style.display='none';
+    $('modal-saida-title').textContent='Nova Saída de Caixa'; $('saida-save-btn').textContent='Lançar saída';
     setVal('saida-desc','');setVal('saida-valor','');setVal('saida-forma','dinheiro');
+    openModal('modal-saida');
+  }
+  function editarSaida(id){
+    var sd=load(KEYS.saidas).filter(function(x){return x.id===id;})[0]; if(!sd) return;
+    if(sd.repasseId){ showToast('Comissão: edite pelo repasse em Comissões'); return; }
+    if(isFechado(sd.data)){ showToast('Caixa de '+fmtData(sd.data)+' está fechado — reabra para editar'); return; }
+    $('saida-categoria').innerHTML=opcoesCategoriaDespesa(sd.categoria);
+    setVal('saida-edit-id',id); $('saida-data-row').style.display='';
+    $('modal-saida-title').textContent=sd.contaId?'Editar saída (conta paga)':'Editar saída';
+    $('saida-save-btn').textContent='Salvar alterações';
+    setVal('saida-data',sd.data||''); setVal('saida-desc',sd.descricao||''); setVal('saida-valor',sd.valor); setVal('saida-forma',sd.forma||'dinheiro'); setVal('saida-categoria',sd.categoria||'');
     openModal('modal-saida');
   }
   function saveSaida(){
     var desc=val('saida-desc'), valor=parseFloat(val('saida-valor'))||0;
     if(!desc||valor<=0){ showToast('Informe descrição e valor'); return; }
     var data=load(KEYS.saidas);
+    var eid=val('saida-edit-id');
+    if(eid){
+      var sd=data.filter(function(x){return x.id===eid;})[0]; if(!sd){ closeModal('modal-saida'); return; }
+      var novaData=val('saida-data')||sd.data;
+      if(novaData!==sd.data && isFechado(novaData)){ showToast('Caixa de '+fmtData(novaData)+' está fechado'); return; }
+      sd.data=novaData; sd.descricao=desc; sd.valor=valor; sd.forma=val('saida-forma'); sd.categoria=val('saida-categoria');
+      save(KEYS.saidas,data);
+      if(sd.contaId){   // mantém a conta paga igual à saída
+        var contas=load(KEYS.contas); var c=contas.filter(function(x){return x.id===sd.contaId;})[0];
+        if(c){ c.valor=valor; c.pagamento=sd.data; c.forma=sd.forma; c.categoria=sd.categoria; c.descricao=desc.replace(/^Pagamento:\s*/,''); c.estimado=false; save(KEYS.contas,contas); }
+      }
+      closeModal('modal-saida'); atualizarTelasFinanceiras(); showToast('Saída atualizada');
+      return;
+    }
     data.push({id:genId(),data:caixaDataAtual(),descricao:desc,valor:valor,forma:val('saida-forma'),categoria:val('saida-categoria')});
     save(KEYS.saidas,data); closeModal('modal-saida'); renderCaixa(); showToast('Saída lançada');
   }
-  function deleteSaida(id){ askConfirm('Excluir esta saída?', function(){ save(KEYS.saidas,load(KEYS.saidas).filter(function(s){return s.id!==id;})); renderCaixa(); showToast('Saída excluída'); }, 'Excluir'); }
+  function deleteSaida(id){
+    var sd=load(KEYS.saidas).filter(function(x){return x.id===id;})[0]; if(!sd) return;
+    if(sd.contaId){ showToast('Esta saída é de uma conta paga — use "Estornar" em Contas › Pagas'); return; }
+    if(sd.repasseId){ showToast('Comissão: estorne pelo repasse em Comissões'); return; }
+    askConfirm('Excluir esta saída?', function(){ save(KEYS.saidas,load(KEYS.saidas).filter(function(s){return s.id!==id;})); atualizarTelasFinanceiras(); showToast('Saída excluída'); }, 'Excluir');
+  }
+  function atualizarTelasFinanceiras(){
+    try{ renderCaixa(); }catch(e){}
+    try{ renderContas(); }catch(e){}
+    try{ if($('ptab-saidas') && $('ptab-saidas').style.display!=='none') renderTodasSaidas(); }catch(e){}
+  }
 
   function fecharCaixa(){
     var data=caixaDataAtual();
@@ -2184,7 +2261,8 @@
     $('empty-cx-saidas').style.display=saidas.length?'none':'block';
     $('tbody-cx-saidas').innerHTML=saidas.map(function(s){
       return '<tr><td>'+esc(s.descricao)+'<br><span class="text-muted" style="font-size:11px">'+formaLabel(s.forma)+'</span></td><td class="text-muted" style="font-size:12px">'+(esc(s.categoria)||'—')+'</td><td>'+money(s.valor)+'</td>'+
-      '<td><button class="btn btn-sm btn-danger" data-action="del-saida" data-id="'+s.id+'">×</button></td></tr>';
+      '<td><div class="action-row">'+(s.repasseId?'':'<button class="btn btn-sm btn-outline" data-action="edit-saida" data-id="'+s.id+'" title="Editar">✎</button>')+
+      (s.contaId||s.repasseId?'':'<button class="btn btn-sm btn-danger" data-action="del-saida" data-id="'+s.id+'">×</button>')+'</div></td></tr>';
     }).join('');
 
     // fechamento UI
@@ -2518,17 +2596,62 @@
   function switchPtab(name){
     var tabs=document.querySelectorAll('#page-contas .tab');
     for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active', tabs[i].getAttribute('data-ptab')===name);
-    ['apagar','pagas'].forEach(function(n){ var el=$('ptab-'+n); if(el) el.style.display=n===name?'block':'none'; });
+    ['apagar','pagas','saidas'].forEach(function(n){ var el=$('ptab-'+n); if(el) el.style.display=n===name?'block':'none'; });
     if(name==='pagas'){ if(!val('ct-pg-ini')||!val('ct-pg-fim')) ctPagasPeriodoMes(); renderContasPagas(); }
+    if(name==='saidas'){ if(!val('ct-sd-ini')||!val('ct-sd-fim')){ ctPagasPeriodoMes(); setVal('ct-sd-ini',val('ct-pg-ini')); setVal('ct-sd-fim',val('ct-pg-fim')); } renderTodasSaidas(); }
   }
   function ctPagasPeriodoMes(){ var d=new Date(); setVal('ct-pg-ini',d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'); var f=new Date(d.getFullYear(),d.getMonth()+1,0); setVal('ct-pg-fim',f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0')); }
 
   function novaContaModal(){
-    var leaves=planoLeaves('despesa');
-    $('nc-categoria').innerHTML='<option value="">Selecione...</option>'+leaves.map(function(c){return '<option value="'+esc(c.nome)+'">'+esc(c.num)+' '+esc(c.path)+'</option>';}).join('');
+    $('nc-categoria').innerHTML=opcoesCategoriaDespesa();
+    setVal('nc-edit-id',''); $('modal-nc-title').textContent='Nova Conta a Pagar';
+    $('nc-pago-row').style.display='none'; $('nc-futuras-row').style.display='none'; $('nc-recorrente-row').style.display='';
+  }
+  function editarConta(id){
+    var c=load(KEYS.contas).filter(function(x){return x.id===id;})[0]; if(!c) return;
+    limparFormConta();
+    $('nc-categoria').innerHTML=opcoesCategoriaDespesa(c.categoria);
+    setVal('nc-edit-id',id);
+    $('modal-nc-title').textContent=c.status==='pago'?'Editar conta paga':'Editar conta a pagar';
+    setVal('nc-desc',c.descricao||''); setVal('nc-valor',c.valor); setVal('nc-venc',c.vencimento||''); setVal('nc-fornecedor',c.fornecedor||''); setVal('nc-categoria',c.categoria||'');
+    var pago=c.status==='pago';
+    $('nc-pago-row').style.display=pago?'':'none';
+    if(pago){ setVal('nc-pagamento',c.pagamento||''); setVal('nc-forma',c.forma||'pix'); }
+    $('nc-futuras-row').style.display=(c.recorrenteId && !pago)?'':'none';
+    if($('nc-futuras')) $('nc-futuras').checked=false;
+    $('nc-recorrente-row').style.display='none';
+    openModal('modal-nova-conta');
+  }
+  function salvarEdicaoConta(eid){
+    var desc=val('nc-desc'), valor=parseFloat(val('nc-valor'))||0;
+    if(!desc||valor<=0){ showToast('Informe descrição e valor'); return; }
+    var contas=load(KEYS.contas); var c=contas.filter(function(x){return x.id===eid;})[0]; if(!c){ closeModal('modal-nova-conta'); return; }
+    var antesVenc=c.vencimento;
+    c.descricao=desc; c.valor=valor; c.vencimento=val('nc-venc'); c.fornecedor=val('nc-fornecedor'); c.categoria=val('nc-categoria');
+    if(c.valor!==undefined) c.estimado=false;
+    var nFut=0;
+    if(c.recorrenteId && c.status!=='pago' && $('nc-futuras') && $('nc-futuras').checked){
+      contas.forEach(function(x){
+        if(x.id!==c.id && x.recorrenteId===c.recorrenteId && x.status!=='pago' && (x.vencimento||'')>(antesVenc||'')){
+          x.descricao=desc; x.fornecedor=c.fornecedor; x.valor=valor; x.categoria=c.categoria; x.estimado=false; nFut++;
+        }
+      });
+    }
+    if(c.status==='pago'){
+      c.pagamento=val('nc-pagamento')||c.pagamento; c.forma=val('nc-forma')||c.forma;
+      var saidas=load(KEYS.saidas); var sd=saidas.filter(function(s){return s.contaId===c.id;})[0];
+      if(sd){ sd.data=c.pagamento; sd.valor=valor; sd.forma=c.forma; sd.categoria=c.categoria; sd.descricao='Pagamento: '+desc; }
+      else { saidas.push({id:genId(),data:c.pagamento,descricao:'Pagamento: '+desc,valor:valor,forma:c.forma,categoria:c.categoria||'',contaId:c.id}); }   // recria a saída se tiver sumido
+      save(KEYS.contas,contas); save(KEYS.saidas,saidas);
+    } else {
+      save(KEYS.contas,contas);
+    }
+    limparFormConta(); closeModal('modal-nova-conta'); atualizarTelasFinanceiras();
+    showToast(nFut?('Conta atualizada + '+nFut+' meses seguintes'):'Conta atualizada');
   }
 
   function saveContaPagar(){
+    var eid=val('nc-edit-id'); if(eid){ salvarEdicaoConta(eid); return; }
     var desc=val('nc-desc'), valor=parseFloat(val('nc-valor'))||0;
     if(!desc||valor<=0){ showToast('Informe descrição e valor'); return; }
     var venc=val('nc-venc');
@@ -2557,7 +2680,8 @@
   }
 
   function limparFormConta(){
-    ['nc-desc','nc-valor','nc-venc','nc-fornecedor'].forEach(function(i){setVal(i,'');}); setVal('nc-categoria','');
+    ['nc-desc','nc-valor','nc-venc','nc-fornecedor','nc-edit-id','nc-pagamento'].forEach(function(i){setVal(i,'');}); setVal('nc-categoria','');
+    if($('nc-futuras')) $('nc-futuras').checked=false;
     if($('nc-recorrente')) $('nc-recorrente').checked=false;
     if($('nc-recorrente-info')) $('nc-recorrente-info').style.display='none';
   }
@@ -2654,7 +2778,7 @@
         '<td class="text-muted" style="font-size:12px">'+(esc(c.categoria)||'—')+'</td>'+
         '<td><strong>'+money(c.valor)+'</strong>'+estTag+'</td>'+
         '<td><div class="action-row"><button class="btn btn-sm btn-primary" data-action="baixar-conta" data-id="'+c.id+'">Pagar</button>'+
-        '<button class="btn btn-sm btn-outline" data-action="editar-conta-valor" data-id="'+c.id+'" title="Editar valor">R$</button>'+
+        '<button class="btn btn-sm btn-outline" data-action="edit-conta" data-id="'+c.id+'" title="Editar">✎ Editar</button>'+
         '<button class="btn btn-sm btn-danger" data-action="del-conta-pagar" data-id="'+c.id+'">×</button></div></td></tr>';
     }).join('');
 
@@ -2670,7 +2794,29 @@
     $('tbody-contas-pagas').innerHTML=pagas.map(function(c){
       return '<tr><td>'+fmtData(c.pagamento)+'</td><td>'+esc(c.descricao)+'</td><td class="text-muted" style="font-size:12px">'+(esc(c.categoria)||'—')+'</td>'+
         '<td><span class="badge '+formaCls(c.forma)+'">'+formaLabel(c.forma)+'</span></td><td><strong>'+money(c.valor)+'</strong></td>'+
-        '<td><button class="btn btn-sm btn-outline" data-action="estornar-conta" data-id="'+c.id+'">Estornar</button></td></tr>';
+        '<td><div class="action-row"><button class="btn btn-sm btn-outline" data-action="edit-conta" data-id="'+c.id+'" title="Editar">✎ Editar</button><button class="btn btn-sm btn-outline" data-action="estornar-conta" data-id="'+c.id+'">Estornar</button></div></td></tr>';
+    }).join('');
+  }
+
+  function renderTodasSaidas(){
+    var i=val('ct-sd-ini'), f=val('ct-sd-fim'), tipo=val('ct-sd-tipo');
+    function tipoDe(s){ return s.repasseId?'repasse':(s.contaId?'conta':'avulsa'); }
+    var todas=load(KEYS.saidas).filter(function(s){ return (!i||s.data>=i) && (!f||s.data<=f); });
+    var tot={conta:0,avulsa:0,repasse:0};
+    todas.forEach(function(s){ tot[tipoDe(s)]+=(parseFloat(s.valor)||0); });
+    $('ct-sd-total').textContent=money(tot.conta+tot.avulsa+tot.repasse);
+    $('ct-sd-conta').textContent=money(tot.conta); $('ct-sd-avulsa').textContent=money(tot.avulsa); $('ct-sd-repasse').textContent=money(tot.repasse);
+    var lista=todas.filter(function(s){ return !tipo || tipoDe(s)===tipo; });
+    lista.sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); });
+    var rotulo={conta:'<span class="badge badge-nude">conta paga</span>',avulsa:'<span class="badge">caixa</span>',repasse:'<span class="badge">comissão</span>'};
+    $('empty-contas-saidas').style.display=lista.length?'none':'block';
+    $('tbody-contas-saidas').innerHTML=lista.map(function(s){
+      var t=tipoDe(s);
+      var acoes='';
+      if(t!=='repasse') acoes+='<button class="btn btn-sm btn-outline" data-action="edit-saida" data-id="'+s.id+'" title="Editar">✎ Editar</button>';
+      if(t==='avulsa') acoes+='<button class="btn btn-sm btn-danger" data-action="del-saida" data-id="'+s.id+'">×</button>';
+      return '<tr><td>'+fmtData(s.data)+'</td><td>'+esc(s.descricao)+' '+rotulo[t]+'</td><td class="text-muted" style="font-size:12px">'+(esc(s.categoria)||'—')+'</td>'+
+        '<td><span class="badge '+formaCls(s.forma)+'">'+formaLabel(s.forma)+'</span></td><td><strong>'+money(s.valor)+'</strong></td><td><div class="action-row">'+acoes+'</div></td></tr>';
     }).join('');
   }
 
@@ -2731,6 +2877,8 @@
       case 'nova-saida': novaSaida(); break;
       case 'save-saida': saveSaida(); break;
       case 'del-saida': deleteSaida(id); break;
+      case 'edit-saida': editarSaida(id); break;
+      case 'edit-conta': editarConta(id); break;
       case 'fechar-caixa': fecharCaixa(); break;
       case 'reabrir-caixa': reabrirCaixa(); break;
       case 'save-taxas': saveTaxas(); break;
@@ -2782,6 +2930,7 @@
     if(t.id==='conta-tipo'){ refreshContaParentSelect(); return; }
     if(t.id==='rel-ini'||t.id==='rel-fim'){ renderRelatorios(); return; }
     if(t.id==='ct-pg-ini'||t.id==='ct-pg-fim'){ renderContasPagas(); return; }
+    if(t.id==='ct-sd-ini'||t.id==='ct-sd-fim'||t.id==='ct-sd-tipo'){ renderTodasSaidas(); return; }
     if(t.id==='nc-recorrente'){ var inf=$('nc-recorrente-info'); if(inf) inf.style.display=t.checked?'block':'none'; return; }
   });
 
