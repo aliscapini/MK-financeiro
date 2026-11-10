@@ -205,10 +205,10 @@ main{margin-top:10px}
   .hero .mission b{font-size:48px}
   .section-title{font-size:27px}
   /* two-column grids on desktop */
-  #v-hoje,#v-semana,#v-resultados{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
+  #v-hoje.active,#v-semana.active,#v-resultados.active{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
   #v-hoje .section-title,#v-semana .section-title,#v-resultados .section-title{grid-column:1/-1}
   #v-semana .weekcta,#v-resultados .future{grid-column:1/-1}
-  #v-plano{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
+  #v-plano.active{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
   #v-plano .section-title{grid-column:1/-1}
   #v-plano .legend{grid-column:1/-1}
   .modal{align-items:center}
@@ -280,7 +280,6 @@ main{margin-top:10px}
   <nav class="tabs"><div class="row">
     <button class="tab active" data-v="hoje">Hoje</button>
     <button class="tab" data-v="semana">Semana</button>
-    <button class="tab" data-v="resultados">Resultados</button>
     <button class="tab" data-v="plano">Plano</button>
   </div></nav>
 
@@ -292,11 +291,10 @@ main{margin-top:10px}
   <main>
     <div class="view active" id="v-hoje"></div>
     <div class="view" id="v-semana"></div>
-    <div class="view" id="v-resultados"></div>
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.0</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.1</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -507,7 +505,6 @@ function buildWeek(St,mon,rnd){
 /* ---- planner v7: 3 posts fixos (qui/sex/sáb), pilar por dia, rollover, feedback ---- */
 function generateNextWeek(S){
  S.history.push({week:weekLabel(parse(S.anchor)),posts:S.posts.map(p=>({tema:p.tema,tipo:p.tipo,mechas:p.mechas,status:'sugerido',obs:p.obs||''}))});
- // os conteúdos da semana vão para Resultados (preencher é opcional)
  S.posts.forEach(p=>{if(!S.metricas.find(m=>m.postId===p.id))S.metricas.push({postId:p.id,tema:p.tema,pub:p.date||S.anchor,pilar:p.pilar,alcance:'',msgs:'',agenda:'',salvos:''});});
  if(S.metricas.length>40)S.metricas=S.metricas.slice(-40);
  suggestFromWeek(S);
@@ -586,7 +583,7 @@ function buildBriefing(p){
 let CURVIEW='hoje';
 function go(v){CURVIEW=v;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.v===v));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));render();}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
-function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderResultados();renderPlano();}
+function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderPlano();}
 function renderAviso(){}
 
 function renderHero(){
