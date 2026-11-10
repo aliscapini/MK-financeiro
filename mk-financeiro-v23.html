@@ -633,18 +633,17 @@
 
     <div id="rtab-pagas" class="rtab-content" style="display:none">
       <div class="search-bar">
-        <select class="form-select" id="rel-pg-tipo" style="width:360px">
-          <option value="">Todas as saídas pagas (contas, caixa e comissões)</option>
-          <option value="conta">Só contas a pagar</option>
-          <option value="conta+avulsa">Contas + saídas do Caixa (sem comissões)</option>
+        <select class="form-select" id="rel-pg-tipo" style="width:200px">
+          <option value="">Com comissões</option>
+          <option value="conta+avulsa">Sem comissões</option>
         </select>
         <button class="btn btn-sm btn-outline" data-action="rel-pg-csv">⬇ Exportar para Excel (CSV)</button>
       </div>
       <div class="stat-cards">
         <div class="stat-card"><div class="stat-label">Total pago</div><div class="stat-value sm" id="rel-pg-total">R$ 0,00</div></div>
-        <div class="stat-card"><div class="stat-label">Contas a pagar</div><div class="stat-value sm" id="rel-pg-conta">R$ 0,00</div></div>
-        <div class="stat-card"><div class="stat-label">Saídas do Caixa</div><div class="stat-value sm" id="rel-pg-avulsa">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value sm" id="rel-pg-desp">R$ 0,00</div></div>
         <div class="stat-card"><div class="stat-label">Comissões</div><div class="stat-value sm" id="rel-pg-repasse">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Pagamentos</div><div class="stat-value sm" id="rel-pg-n">0</div></div>
       </div>
       <div class="panel"><div class="panel-title">Resumo por categoria</div>
         <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Categoria</th><th>Qtd</th><th>Total</th></tr></thead><tbody id="rel-pg-cat"></tbody></table></div>
@@ -2618,8 +2617,8 @@
   }
 
   // ===== RELATÓRIO DE CONTAS PAGAS (contabilidade) =====
-  var PG_TIPO_LABEL={'':'Todas as saídas pagas','conta':'Só contas a pagar','conta+avulsa':'Contas + Caixa (sem comissões)'};
-  var PG_TIPO_NOME={conta:'Conta a pagar',avulsa:'Saída do Caixa',repasse:'Comissão'};
+  var PG_TIPO_LABEL={'':'Com comissões','conta':'Só contas a pagar','conta+avulsa':'Sem comissões'};
+  var PG_TIPO_NOME={conta:'Despesa',avulsa:'Despesa',repasse:'Comissão'};
   function pgGrupoCat(catNome){
     var plano=load(KEYS.plano);
     var leaf=plano.filter(function(c){return c.nome===catNome;})[0];
@@ -2656,13 +2655,13 @@
       cats[k].n++; cats[k].v+=l.valor;
     });
     $('rel-pg-total').textContent=money(total);
-    $('rel-pg-conta').textContent=money(tot.conta); $('rel-pg-avulsa').textContent=money(tot.avulsa); $('rel-pg-repasse').textContent=money(tot.repasse);
+    $('rel-pg-desp').textContent=money(tot.conta+tot.avulsa); $('rel-pg-repasse').textContent=money(tot.repasse); $('rel-pg-n').textContent=linhas.length;
     var catArr=Object.keys(cats).map(function(k){return cats[k];}).sort(function(a,b){ return a.grupo.localeCompare(b.grupo)||b.v-a.v; });
     $('rel-pg-cat').innerHTML=catArr.map(function(c){ return '<tr><td>'+esc(c.grupo)+'</td><td>'+esc(c.cat)+'</td><td>'+c.n+'</td><td>'+money(c.v)+'</td></tr>'; }).join('')+
       (catArr.length?'<tr><td colspan="3"><strong>Total</strong></td><td><strong>'+money(total)+'</strong></td></tr>':'');
     $('rel-pg-empty').style.display=linhas.length?'none':'block';
     $('rel-pg-tbody').innerHTML=linhas.map(function(l){
-      return '<tr><td>'+fmtData(l.data)+'</td><td class="text-muted" style="font-size:12px">'+(l.venc?fmtData(l.venc):'—')+'</td><td>'+esc(l.descricao)+(l.tipo!=='conta'?' <span class="badge">'+(l.tipo==='repasse'?'comissão':'caixa')+'</span>':'')+'</td>'+
+      return '<tr><td>'+fmtData(l.data)+'</td><td class="text-muted" style="font-size:12px">'+(l.venc?fmtData(l.venc):'—')+'</td><td>'+esc(l.descricao)+(l.tipo==='repasse'?' <span class="badge">comissão</span>':'')+'</td>'+
         '<td class="text-muted" style="font-size:12px">'+(esc(l.fornecedor)||'—')+'</td><td class="text-muted" style="font-size:12px">'+(esc(l.categoria)||'—')+'</td>'+
         '<td><span class="badge '+formaCls(l.forma)+'">'+formaLabel(l.forma)+'</span></td><td><strong>'+money(l.valor)+'</strong></td></tr>';
     }).join('');
