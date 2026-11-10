@@ -576,6 +576,7 @@
 
     <div class="tabs">
       <div class="tab active" data-rtab="faturamento">Faturamento</div>
+      <div class="tab" data-rtab="entradas">Entradas</div>
       <div class="tab" data-rtab="pagas">Contas Pagas</div>
       <div class="tab" data-rtab="profissional">Por Profissional</div>
       <div class="tab" data-rtab="servico">Por Serviço</div>
@@ -629,6 +630,23 @@
         <div class="panel-title">DRE Simplificado</div>
         <div id="rel-dre"></div>
       </div>
+    </div>
+
+    <div id="rtab-entradas" class="rtab-content" style="display:none">
+      <div class="search-bar">
+        <button class="btn btn-sm btn-outline" data-action="rel-ent-csv">⬇ Exportar para Excel (CSV)</button>
+      </div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-label">Total recebido (bruto)</div><div class="stat-value sm" id="rel-ent-bruto">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Taxas de cartão</div><div class="stat-value sm" id="rel-ent-taxa">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Total líquido</div><div class="stat-value sm" id="rel-ent-liq">R$ 0,00</div></div>
+        <div class="stat-card"><div class="stat-label">Comandas</div><div class="stat-value sm" id="rel-ent-n">0</div></div>
+      </div>
+      <div class="panel"><div class="panel-title">Resumo por forma de pagamento</div>
+        <div class="table-wrap"><table><thead><tr><th>Forma</th><th>Bruto</th><th>Taxa</th><th>Líquido</th></tr></thead><tbody id="rel-ent-formas"></tbody></table></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Serviços / produtos</th><th>Profissional</th><th>Forma</th><th>Valor</th></tr></thead><tbody id="rel-ent-tbody"></tbody></table>
+        <div id="rel-ent-empty" class="empty-state"><div class="empty-sub">Nenhuma entrada no período</div></div></div>
     </div>
 
     <div id="rtab-pagas" class="rtab-content" style="display:none">
@@ -2459,7 +2477,7 @@
     var active='faturamento';
     var tabs=document.querySelectorAll('#page-relatorios .tab');
     for(var i=0;i<tabs.length;i++){ if(tabs[i].classList.contains('active')) active=tabs[i].getAttribute('data-rtab'); }
-    var nomes={faturamento:'Faturamento',profissional:'Por Profissional',servico:'Por Serviço',estoque:'Estoque',dre:'DRE Simplificado',fluxo:'Fluxo de Caixa',pagas:'Contas Pagas'};
+    var nomes={faturamento:'Faturamento',profissional:'Por Profissional',servico:'Por Serviço',estoque:'Estoque',dre:'DRE Simplificado',fluxo:'Fluxo de Caixa',pagas:'Contas Pagas',entradas:'Entradas'};
     // marcar conteúdo a imprimir
     document.querySelectorAll('#page-relatorios .rtab-content').forEach(function(el){ el.classList.remove('print-active'); });
     var alvo=$('rtab-'+active); if(alvo) alvo.classList.add('print-active');
@@ -2493,7 +2511,7 @@
   function switchRtab(name){
     var tabs=document.querySelectorAll('#page-relatorios .tab');
     for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active', tabs[i].getAttribute('data-rtab')===name);
-    ['faturamento','profissional','servico','estoque','dre','fluxo','pagas'].forEach(function(n){ var el=$('rtab-'+n); if(el) el.style.display=n===name?'block':'none'; });
+    ['faturamento','profissional','servico','estoque','dre','fluxo','pagas','entradas'].forEach(function(n){ var el=$('rtab-'+n); if(el) el.style.display=n===name?'block':'none'; });
   }
 
   function renderRelatorios(){
@@ -2610,6 +2628,7 @@
     $('rel-fluxo-empty').style.display=fdias.length?'none':'block';
     var acum=0;
     renderRelPagas();
+    renderRelEntradas();
     $('rel-fluxo-tbody').innerHTML=fdias.map(function(d){
       var saldo=dayset[d].ent-dayset[d].sai; acum+=saldo;
       return '<tr><td>'+fmtData(d)+'</td><td style="color:var(--sucesso)">'+money(dayset[d].ent)+'</td><td style="color:var(--erro)">'+money(dayset[d].sai)+'</td><td>'+money(saldo)+'</td><td><strong>'+money(acum)+'</strong></td></tr>';
@@ -2665,6 +2684,47 @@
         '<td class="text-muted" style="font-size:12px">'+(esc(l.fornecedor)||'—')+'</td><td class="text-muted" style="font-size:12px">'+(esc(l.categoria)||'—')+'</td>'+
         '<td><span class="badge '+formaCls(l.forma)+'">'+formaLabel(l.forma)+'</span></td><td><strong>'+money(l.valor)+'</strong></td></tr>';
     }).join('');
+  }
+  // ===== RELATÓRIO DE ENTRADAS (contabilidade) =====
+  var ENT_FORMAS=['pix','debito','credito','dinheiro'];
+  function linhasEntradas(ini,fim){
+    var taxas=getTaxas();
+    return load(KEYS.comandas).filter(function(c){ return (!ini||c.data>=ini)&&(!fim||c.data<=fim); })
+      .sort(function(a,b){ return ((a.data||'')+(a.criadoEm||'')).localeCompare((b.data||'')+(b.criadoEm||'')); })
+      .map(function(c){
+        var f={pix:0,debito:0,credito:0,dinheiro:0}, outros=0;
+        (c.pagamentos||[]).forEach(function(p){ var v=parseFloat(p.valor)||0; if(f[p.forma]!=null) f[p.forma]+=v; else outros+=v; });
+        var taxa=f.debito*(taxas.debito/100)+f.credito*(taxas.credito/100);
+        var itens=(c.servicos||[]).map(function(s){return s.nome;}).concat((c.produtos||[]).map(function(pr){return pr.nome+((pr.qtd||1)>1?' ('+pr.qtd+')':'');}));
+        var pset={}; (c.servicos||[]).forEach(function(s){ if(s.profissionalNome) pset[s.profissionalNome.split(' ')[0]]=1; });
+        var formas=(c.pagamentos||[]).map(function(p){return p.forma;}).filter(function(x,i,a){return a.indexOf(x)===i;});
+        return {data:c.data, cliente:c.clienteNome||'', itens:itens.join(', '), prof:Object.keys(pset).join(', '),
+          formas:formas, f:f, outros:outros, serv:c.totalServicos||0, prod:c.totalProdutos||0, total:c.total||0, taxa:taxa, liq:(c.total||0)-taxa};
+      });
+  }
+  function renderRelEntradas(){
+    var linhas=linhasEntradas(val('rel-ini'),val('rel-fim')), taxas=getTaxas();
+    var tot={bruto:0,taxa:0}, fm={pix:0,debito:0,credito:0,dinheiro:0};
+    linhas.forEach(function(l){ tot.bruto+=l.total; tot.taxa+=l.taxa; ENT_FORMAS.forEach(function(k){ fm[k]+=l.f[k]; }); });
+    $('rel-ent-bruto').textContent=money(tot.bruto); $('rel-ent-taxa').textContent=money(tot.taxa);
+    $('rel-ent-liq').textContent=money(tot.bruto-tot.taxa); $('rel-ent-n').textContent=linhas.length;
+    var tx={pix:0,dinheiro:0,debito:taxas.debito,credito:taxas.credito};
+    $('rel-ent-formas').innerHTML=ENT_FORMAS.map(function(k){ var t=fm[k]*tx[k]/100; return '<tr><td>'+formaLabel(k)+'</td><td>'+money(fm[k])+'</td><td>'+money(t)+'</td><td>'+money(fm[k]-t)+'</td></tr>'; }).join('')+
+      '<tr><td><strong>Total</strong></td><td><strong>'+money(tot.bruto)+'</strong></td><td><strong>'+money(tot.taxa)+'</strong></td><td><strong>'+money(tot.bruto-tot.taxa)+'</strong></td></tr>';
+    $('rel-ent-empty').style.display=linhas.length?'none':'block';
+    $('rel-ent-tbody').innerHTML=linhas.slice().reverse().map(function(l){
+      return '<tr><td>'+fmtData(l.data)+'</td><td><strong>'+(esc(l.cliente)||'<span class="text-muted">Sem cliente</span>')+'</strong></td>'+
+        '<td class="text-muted" style="font-size:12px;max-width:220px">'+esc(l.itens)+'</td><td style="font-size:12px">'+esc(l.prof)+'</td>'+
+        '<td>'+l.formas.map(function(f){ return '<span class="badge '+formaCls(f)+'">'+formaLabel(f)+'</span>'; }).join(' ')+'</td><td><strong>'+money(l.total)+'</strong></td></tr>';
+    }).join('');
+  }
+  function exportarEntradasCSV(){
+    var ini=val('rel-ini'), fim=val('rel-fim');
+    var linhas=linhasEntradas(ini,fim);
+    if(!linhas.length){ showToast('Nenhuma entrada no período'); return; }
+    var nome='MK_Entradas_'+(ini||'inicio').replace(/-/g,'')+'_a_'+(fim||'hoje').replace(/-/g,'');
+    baixarCSV(nome,['Data','Cliente','Serviços / produtos','Profissional','Serviços (R$)','Produtos (R$)','Pix (R$)','Débito (R$)','Crédito (R$)','Dinheiro (R$)','Total bruto (R$)','Taxa cartão (R$)','Total líquido (R$)'],
+      linhas.map(function(l){ return [fmtData(l.data), l.cliente, l.itens, l.prof, numBR(l.serv), numBR(l.prod), numBR(l.f.pix), numBR(l.f.debito), numBR(l.f.credito), numBR(l.f.dinheiro), numBR(l.total), numBR(l.taxa), numBR(l.liq)]; }));
   }
   function numBR(v){ return (Math.round(v*100)/100).toFixed(2).replace('.',','); }
   function exportarPagasCSV(ini,fim,tipo){
@@ -2972,6 +3032,7 @@
       case 'rel-per-semana': relPerSemana(); break;
       case 'rel-per-mes': relPerMes(); break;
       case 'imprimir-rel': imprimirRel(); break;
+      case 'rel-ent-csv': exportarEntradasCSV(); break;
       case 'rel-pg-csv': exportarPagasCSV(val('rel-ini'),val('rel-fim'),val('rel-pg-tipo')||''); break;
       case 'ct-pg-csv': exportarPagasCSV(val('ct-pg-ini'),val('ct-pg-fim'),'conta'); break;
       case 'save-conta-pagar': saveContaPagar(); break;
