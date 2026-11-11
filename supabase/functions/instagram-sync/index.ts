@@ -38,7 +38,7 @@ async function insights(id: string, token: string) {
       return out;
     } catch (e) { ultimoErroInsights = String((e as Error).message || e); }
   }
-  return {};
+  return {} as Record<string, number>;
 }
 
 Deno.serve(async (req) => {
@@ -97,19 +97,33 @@ Deno.serve(async (req) => {
     }
 
     // 3) últimos 30 posts + métricas
-    const media = await ig(`${V}/${quem}/media?fields=id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=30&access_token=${token}`);
+    const base = "id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count";
+    // totais com impulsionamento (só existem no login do Facebook); os números do insights são só orgânicos
+    const extras = row.host === "facebook"
+      ? [",total_like_count,total_views_count,boost_ads_list", ",total_like_count,total_views_count", ""] : [""];
+    let media: any = null, erroMedia = "";
+    for (const ex of extras) {
+      try { media = await ig(`${V}/${quem}/media?fields=${base}${ex}&limit=30&access_token=${token}`); break; }
+      catch (e) { erroMedia = String((e as Error).message || e); }
+    }
+    if (!media) throw new Error(erroMedia);
     const linhas = [];
     let semMetricas = 0;
     for (const m of media.data || []) {
       const tipo = m.media_product_type === "REELS" ? "Reels" : m.media_type === "CAROUSEL_ALBUM" ? "Carrossel" : m.media_type === "VIDEO" ? "Vídeo" : "Foto";
       const s = await insights(m.id, token);
       if (s.reach == null) semMetricas++;
+      const ads = (m.boost_ads_list && (m.boost_ads_list.data || m.boost_ads_list)) || [];
       linhas.push({
         media_id: m.id, tipo, legenda: (m.caption || "").slice(0, 300), link: m.permalink,
         thumb: m.thumbnail_url || m.media_url || null, publicado_em: m.timestamp,
         alcance: s.reach ?? null, views: s.views ?? null, salvos: s.saved ?? null,
         compartilhamentos: s.shares ?? null, interacoes: s.total_interactions ?? null,
         curtidas: m.like_count ?? null, comentarios: m.comments_count ?? null,
+        views_total: m.total_views_count ?? null, curtidas_total: m.total_like_count ?? null,
+        impulsionado: (Array.isArray(ads) && ads.length > 0)
+          || (m.total_like_count != null && m.like_count != null && m.total_like_count > m.like_count)
+          || (m.total_views_count != null && s.views != null && m.total_views_count > s.views * 1.15),
         atualizado_em: new Date().toISOString(),
       });
     }

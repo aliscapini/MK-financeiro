@@ -322,7 +322,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.5</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.6</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -480,13 +480,53 @@ function ehMechas(St,servNome,tema){const sv=St.servicos.find(x=>x.nome===servNo
 function novoItem(St,tipo,o){return {id:uid(),tipo,date:o.date||null,formato:o.formato,pilar:o.pilar,tema:o.tema,profissional:o.profissional,
  servico:o.servico,mechas:!!o.mechas,objetivo:OBJETIVO_PILAR[o.pilar]||'',referencia:'',orientacoes:'',
  cliente:tipo==='reels'?clienteFor(St,o.servico,o.profissional,o.pilar):'',roteiro:'',reason:o.reason||'',horario:'18h',obs:''};}
+function motivoMechas(tipo){
+ let r='💛 <b>foco em mechas</b>';if(!CTX)return r;
+ const a=tipo==='reels'?CTX.mechasReels:CTX.mechasCarrossel;
+ if(a)r+=` · ${tipo==='reels'?'reels':'carrossel'} de mechas alcança em média ${igN(a)} pessoas (orgânico)`;
+ return r;}
 function itemMechas(St,tipo,date){
  const sv=St.servicos.find(s=>s.categoria==='Mechas')||St.servicos[0];
- if(tipo==='reels'){const t=proximoDe(St,MECHAS_REELS,'reels');return novoItem(St,'reels',{...t,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:'💛 <b>foco em mechas</b>'});}
+ if(tipo==='reels'){const t=proximoDe(St,MECHAS_REELS,'reels');return novoItem(St,'reels',{...t,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:motivoMechas('reels')});}
  const t=proximoDe(St,MECHAS_CARROSSEL,'carrossel');
- return novoItem(St,'carrossel',{...t,formato:'Carrossel',date,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:'💛 <b>foco em mechas</b>'});
+ return novoItem(St,'carrossel',{...t,formato:'Carrossel',date,profissional:'Michele Krasniak',servico:sv.nome,mechas:true,reason:motivoMechas('carrossel')});
 }
+/* ---- v7.6: contexto real (Instagram + Financeiro) para o planejador ---- */
+const TEMA_CATS={'Corte e escova':['Cortes','Escova'],'Tratamentos':['Tratamentos','Pre/Pos Quimica'],'Coloração':['Coloracao'],
+ 'Alinhamento e blindagem':['Alinhamento'],'Make e penteado':['Maquiagem','Penteado','Sobrancelha'],'Mega hair':['Mega Hair'],'Unhas e podologia':['Unhas e Pés']};
+function temaDaCategoria(cat){for(const t in TEMA_CATS)if(TEMA_CATS[t].includes(cat))return t;return null;}
+let CTX=null; // preenchido antes de gerar a semana
+function montarContexto(){
+ if(!IG||!IG.carregado||!IG.status||!IG.status.conectado)return null;
+ const agora=Date.now(),dia=86400000;
+ const ultimoPost={};(IG.posts||[]).forEach(p=>{const t=temaPost(p.legenda);const d=new Date(p.publicado_em).getTime();if(!ultimoPost[t]||d>ultimoPost[t])ultimoPost[t]=d;});
+ const fin={};((IG.fin&&IG.fin.temas)||[]).forEach(t=>fin[t.tema]=t);
+ const prio={};Object.keys(TEMA_CATS).forEach(t=>{
+  const f=fin[t]||{atend:0,atend_ant:0},dias=ultimoPost[t]?Math.floor((agora-ultimoPost[t])/dia):999;
+  let v=(f.atend||0)+2*Math.max(0,(f.atend||0)-(f.atend_ant||0));
+  if(dias>=30)v+=25;if(dias<14)v-=100;
+  prio[t]={v,atend:f.atend||0,ant:f.atend_ant||0,dias};});
+ // formato orgânico mais forte em mechas (só posts com 3+ dias)
+ const mad=(IG.posts||[]).filter(p=>agora-new Date(p.publicado_em).getTime()>=3*dia&&temaPost(p.legenda)==='Mechas e loiro'&&p.alcance!=null);
+ const media=t=>{const a=mad.filter(p=>p.tipo===t).map(p=>p.alcance);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;};
+ // melhor post orgânico dos últimos 30 dias (impulsionados ficam de fora)
+ const cand=(IG.posts||[]).filter(p=>{const a=agora-new Date(p.publicado_em).getTime();return a>=3*dia&&a<=30*dia&&!p.impulsionado&&p.alcance!=null;});
+ const melhor=cand.sort((a,b)=>b.alcance-a.alcance)[0]||null;
+ return {prio,mechasReels:media('Reels'),mechasCarrossel:media('Carrossel'),melhor};
+}
+function motivoTema(t,P){const x=P[t];if(!x)return '';const d=x.atend-x.ant;
+ return `📈 <b>${x.atend} atendimentos de ${t.toLowerCase()} no mês</b>${d>0?' (▲ '+d+')':''}${x.dias>=30?' e nenhum post em 30 dias':''}`;}
 function escolherDiverso(St,pilar,used,rnd){
+ if(CTX){ // tema com mais procura e menos post; dentro dele, a rotação de sempre
+  const temas=Object.keys(CTX.prio).sort((a,b)=>CTX.prio[b].v-CTX.prio[a].v);
+  for(const t of temas){
+   const cats=TEMA_CATS[t];
+   let c=St.servicos.filter(s=>cats.includes(s.categoria)&&!used.has(s.nome)&&!(s.naoRepetir>0));
+   if(!c.length)continue;
+   const sc=s=>(s.status==='NUNCA'?30:s.status==='LIVRE'?20:s.status==='CUIDADO'?8:0)+((s.pilares||[]).includes(pilar)?20:0)+rnd()*10;
+   const s=c.map(s=>({s,v:sc(s)})).sort((a,b)=>b.v-a.v)[0].s;s._motivo=motivoTema(t,CTX.prio);return s;
+  }
+ }
  let c=St.servicos.filter(s=>s.categoria!=='Mechas'&&!used.has(s.nome)&&s.status!=='RECENTE'&&!(s.naoRepetir>0));
  if(!c.length)c=St.servicos.filter(s=>s.categoria!=='Mechas'&&!used.has(s.nome));
  const sc=s=>(s.status==='NUNCA'?100:s.status==='LIVRE'?45:12)+((s.pilares||[]).includes(pilar)?20:0)+rnd()*10;
@@ -502,14 +542,16 @@ function itemDiverso(St,tipo,date,used,rnd){
  }else{
   pilar=tipo==='reels'?'Bastidores & Conexao':(St.weekIndex%4<2?'Educacao & Autoridade':'Venda Direta');
   serv=escolherDiverso(St,pilar,used,rnd);prof=profForService(St,serv).nome;tema=serv.proximoAngulo||serv.nome;
-  reason.push(serv.status==='NUNCA'?'🟣 <b>nunca divulgado</b>':serv.status==='LIVRE'?'🟢 <b>livre</b>':'🟡 ângulo novo');
+  if(serv._motivo){reason.push(serv._motivo);delete serv._motivo;}
+  else reason.push(serv.status==='NUNCA'?'🟣 <b>nunca divulgado</b>':serv.status==='LIVRE'?'🟢 <b>livre</b>':'🟡 ângulo novo');
   const idea=bancoFor(St,pilar);
   if(idea&&!/mecha|loir/i.test(idea.tema)){
    const tl=idea.tema.toLowerCase();
    const hint=St.servicos.find(sv=>sv.categoria!=='Mechas'&&tl.includes(sv.nome.toLowerCase()))
     ||St.servicos.find(sv=>sv.categoria!=='Mechas'&&tl.includes(sv.categoria.toLowerCase().split('/')[0].replace(/s$/,'')));
    tema=idea.tema;idea.status='planejado';reason.push('💡 banco de ideias');
-   if(hint){serv=hint;prof=profForService(St,hint).nome;}
+   if(hint&&!(CTX&&temaDaCategoria(hint.categoria)!==temaDaCategoria(serv.categoria))){serv=hint;prof=profForService(St,hint).nome;}
+   else if(hint){tema=serv.proximoAngulo||serv.nome;idea.status='ideia';reason.pop();}
   }
  }
  reason.push('diversificar serviços');
@@ -535,7 +577,7 @@ function generateNextWeek(S){
  S.history.push({week:weekLabel(parse(S.anchor)),posts:S.posts.map(p=>({tema:p.tema,tipo:p.tipo,mechas:p.mechas,status:'sugerido',obs:p.obs||''}))});
  S.posts.forEach(p=>{if(!S.metricas.find(m=>m.postId===p.id))S.metricas.push({postId:p.id,tema:p.tema,pub:p.date||S.anchor,pilar:p.pilar,alcance:'',msgs:'',agenda:'',salvos:''});});
  if(S.metricas.length>40)S.metricas=S.metricas.slice(-40);
- suggestFromWeek(S);
+ suggestFromWeek(S);suggestFromInstagram(S);
  ageRotation(S);
  {const nextMon=addDays(parse(S.anchor),7);const curMon=mondayOf(today());S.anchor=iso(nextMon<curMon?curMon:nextMon);}
  S.weekIndex=(S.weekIndex||0)+1;
@@ -551,6 +593,14 @@ function trimBanco(S){
  const keep=open.sort((a,b)=>pr[a.prio]-pr[b.prio]).slice(0,30);
  const keepSet=new Set(keep);
  S.banco=S.banco.filter(b=>b.status!=='ideia'||keepSet.has(b));
+}
+function suggestFromInstagram(S){
+ if(!CTX||!CTX.melhor)return;const p=CTX.melhor;const tag='ig:'+p.media_id;
+ if(S.banco.some(b=>b.ref===tag))return;
+ const tema=temaPost(p.legenda),leg=(p.legenda||'').split('\n')[0].replace(/#\S+/g,'').trim().slice(0,50)||'post de '+tema.toLowerCase();
+ S.banco.unshift({prio:'ALTA',tema:'Segundo ângulo: '+leg,profissional:'Michele Krasniak',formato:p.tipo==='Carrossel'?'Carrossel':'Reels (15-30s)',
+  gancho:`Melhor alcance orgânico do mês: ${igN(p.alcance)} pessoas (${p.tipo.toLowerCase()} de ${fmtShort(new Date(p.publicado_em))})`,
+  pilar:/mecha|loir/i.test(tema)?'Transformacao':'Bastidores & Conexao',status:'ideia',origem:'🏆 melhor post orgânico (Instagram)',ref:tag});
 }
 function suggestFromWeek(S){
  const m=S.metricas.filter(x=>x.alcance&&!isNaN(parseInt(x.alcance)));
@@ -589,7 +639,11 @@ function seedState(){
 /* ---------- completion ---------- */
 
 
-function doGenerateNextWeek(){generateNextWeek(S);saveState();go('semana');toast('Semana gerada ✨');}
+async function doGenerateNextWeek(){
+ if(MODE==='online'&&supa&&(!IG.carregado||!IG.fin)){toast('Lendo Instagram e Financeiro…');try{await igLoad();}catch(e){}}
+ CTX=montarContexto();
+ try{generateNextWeek(S);}finally{CTX=null;}
+ saveState();go('semana');toast(IG.status&&IG.status.conectado?'Semana gerada com Instagram + Financeiro ✨':'Semana gerada ✨');}
 
 /* ---------- briefing ---------- */
 function buildBriefing(p){
@@ -819,10 +873,10 @@ function renderInsta(){
   P.forEach(p=>{const d=new Date(p.publicado_em);const top=topIds.has(p.media_id);
     h+=`<a class="igpost${top?' top':''}" href="${p.link}" target="_blank" rel="noopener">
       ${p.thumb?`<img src="${p.thumb}" alt="" loading="lazy" onerror="this.outerHTML='<div class=noimg></div>'">`:'<div class="noimg"></div>'}
-      <div class="ib"><div class="it">${top?'🏆 ':''}${p.tipo} · ${DIAS[d.getDay()]} ${fmtShort(d)}${novo(p)?' · ⏳ subindo':''}</div>
+      <div class="ib"><div class="it">${top?'🏆 ':''}${p.tipo} · ${DIAS[d.getDay()]} ${fmtShort(d)}${novo(p)?' · ⏳ subindo':''}${p.impulsionado?' · 💸 impulsionado':''}</div>
       <div class="il">${(p.legenda||'(sem legenda)').replace(/</g,'&lt;')}</div>
-      <div class="im"><span>Alcance <b>${igN(p.alcance)}</b></span>${p.views!=null?`<span>Views <b>${igN(p.views)}</b></span>`:''}<span>Salvos <b>${igN(p.salvos)}</b></span><span>Compart. <b>${igN(p.compartilhamentos)}</b></span><span>💬 <b>${igN(p.comentarios)}</b></span></div></div></a>`;});
-  h+=`<p class="muted" style="font-size:11.5px;text-align:center">🏆 = os 3 de maior alcance nos últimos 30 dias. Toque no post para abrir no Instagram.</p>`;
+      <div class="im"><span>Alcance <b>${igN(p.alcance)}</b></span>${p.views!=null?`<span>Views <b>${igN(p.views)}</b></span>`:''}<span>Salvos <b>${igN(p.salvos)}</b></span><span>Compart. <b>${igN(p.compartilhamentos)}</b></span><span>💬 <b>${igN(p.comentarios)}</b></span></div>${p.impulsionado&&(p.views_total||p.curtidas_total)?`<div class="im" style="margin-top:3px"><span>Com impulsionamento: ${p.views_total?'views <b>'+igN(p.views_total)+'</b>':''}${p.views_total&&p.curtidas_total?' · ':''}${p.curtidas_total?'curtidas <b>'+igN(p.curtidas_total)+'</b>':''}</span></div>`:''}</div></a>`;});
+  h+=`<p class="muted" style="font-size:11.5px;text-align:center">Todos os números do app são <b>orgânicos</b> (sem o impulsionamento). 💸 = post impulsionado; o total com anúncio aparece embaixo. 🏆 = os 3 de maior alcance orgânico nos últimos 30 dias.</p>`;
   el.innerHTML=h;
 }
 function setMetric(i,k,v){S.metricas[i][k]=v;saveState();}
