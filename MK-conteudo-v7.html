@@ -236,13 +236,18 @@ main{margin-top:10px}
 .stday .sd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom);margin-bottom:2px}
 .stday .st{color:var(--ink-soft)}
 /* v7.3: Instagram */
-.igbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 12px;font-size:12.5px;color:var(--ink-soft)}
+.igbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 12px;font-size:12.5px;color:var(--ink-soft);min-width:0}
+.igbar span{min-width:0;overflow-wrap:anywhere}
+#v-insta{max-width:100%;overflow-x:hidden}
+html,body{max-width:100%;overflow-x:hidden}
+.igpost .ib{overflow-wrap:anywhere}
 .igbar button{background:var(--marrom);color:#fff;border:none;border-radius:10px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
-.igsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.igsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px}
+.ignote{font-size:11.5px;color:var(--ink-soft);margin:0 2px 12px}
 .igsum div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center}
 .igsum b{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--marrom);font-weight:600;line-height:1.1}
-.igsum span{font-size:11px;color:var(--ink-soft)}
-.igpost{display:flex;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:9px;text-decoration:none;color:inherit}
+.igsum span{font-size:11px;color:var(--ink-soft);display:block;line-height:1.3}
+.igpost{display:flex;gap:11px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:9px;text-decoration:none;color:inherit}
 .igpost img,.igpost .noimg{flex:none;width:64px;height:80px;border-radius:9px;object-fit:cover;background:var(--line-soft)}
 .igpost .ib{flex:1;min-width:0}
 .igpost .it{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom)}
@@ -305,7 +310,7 @@ main{margin-top:10px}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.3</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.4</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -745,14 +750,17 @@ function renderInsta(){
   const P=IG.posts;
   if(!P.length){el.innerHTML=h+`<div class="empty"><div class="big">Nenhum post ainda</div><div class="muted">Toque em Atualizar para buscar os posts.</div></div>`;return;}
   const lim=Date.now()-30*86400000;const rec=P.filter(p=>new Date(p.publicado_em).getTime()>=lim);
+  const novo=p=>Date.now()-new Date(p.publicado_em).getTime()<3*86400000; // posts com menos de 3 dias ainda estão subindo
+  const maduros=rec.filter(p=>!novo(p));
   const med=(arr,k)=>{const v=arr.map(p=>p[k]).filter(x=>x!=null);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null;};
-  const reels=rec.filter(p=>p.tipo==='Reels'),car=rec.filter(p=>p.tipo==='Carrossel');
-  h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel</span></div></div>`;
-  const topIds=new Set([...rec].filter(p=>p.alcance!=null).sort((a,b)=>b.alcance-a.alcance).slice(0,3).map(p=>p.media_id));
+  const reels=maduros.filter(p=>p.tipo==='Reels'),car=maduros.filter(p=>p.tipo==='Carrossel');
+  h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel</span></div></div>
+  <p class="ignote">Médias dos últimos 30 dias, sem contar posts com menos de 3 dias (os números deles ainda estão subindo).</p>`;
+  const topIds=new Set([...maduros].filter(p=>p.alcance!=null).sort((a,b)=>b.alcance-a.alcance).slice(0,3).map(p=>p.media_id));
   P.forEach(p=>{const d=new Date(p.publicado_em);const top=topIds.has(p.media_id);
     h+=`<a class="igpost${top?' top':''}" href="${p.link}" target="_blank" rel="noopener">
       ${p.thumb?`<img src="${p.thumb}" alt="" loading="lazy" onerror="this.outerHTML='<div class=noimg></div>'">`:'<div class="noimg"></div>'}
-      <div class="ib"><div class="it">${top?'🏆 ':''}${p.tipo} · ${DIAS[d.getDay()]} ${fmtShort(d)}</div>
+      <div class="ib"><div class="it">${top?'🏆 ':''}${p.tipo} · ${DIAS[d.getDay()]} ${fmtShort(d)}${novo(p)?' · ⏳ subindo':''}</div>
       <div class="il">${(p.legenda||'(sem legenda)').replace(/</g,'&lt;')}</div>
       <div class="im"><span>Alcance <b>${igN(p.alcance)}</b></span>${p.views!=null?`<span>Views <b>${igN(p.views)}</b></span>`:''}<span>Salvos <b>${igN(p.salvos)}</b></span><span>Compart. <b>${igN(p.compartilhamentos)}</b></span><span>💬 <b>${igN(p.comentarios)}</b></span></div></div></a>`;});
   h+=`<p class="muted" style="font-size:11.5px;text-align:center">🏆 = os 3 de maior alcance nos últimos 30 dias. Toque no post para abrir no Instagram.</p>`;
