@@ -322,7 +322,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.6</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.7</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -864,9 +864,12 @@ function renderInsta(){
   const novo=p=>Date.now()-new Date(p.publicado_em).getTime()<3*86400000; // posts com menos de 3 dias ainda estão subindo
   const maduros=rec.filter(p=>!novo(p));
   const med=(arr,k)=>{const v=arr.map(p=>p[k]).filter(x=>x!=null);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null;};
-  const reels=maduros.filter(p=>p.tipo==='Reels'),car=maduros.filter(p=>p.tipo==='Carrossel');
-  h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel</span></div></div>
-  <p class="ignote">Médias dos últimos 30 dias, sem contar posts com menos de 3 dias (os números deles ainda estão subindo).</p>`;
+  // média por formato: últimos 30 dias; se não houver post com 3+ dias nesse período, usa os 3 mais recentes desse formato
+  const porTipo=t=>{const a=maduros.filter(p=>p.tipo===t);if(a.length)return {l:a,rot:''};
+    const b=P.filter(p=>p.tipo===t&&!novo(p)).slice(0,3);return {l:b,rot:b.length?` (últimos ${b.length})`:''};};
+  const R=porTipo('Reels'),C=porTipo('Carrossel');const reels=R.l,car=C.l;
+  h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels${R.rot}</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel${C.rot}</span></div></div>
+  <p class="ignote">Médias dos últimos 30 dias, sem contar posts com menos de 3 dias (os números deles ainda estão subindo). Se um formato não tiver post com 3+ dias no mês, a média usa os últimos desse formato.</p>`;
   h+=renderCruzamento(rec);
   h+=`<div class="section-title" style="font-size:22px">Posts</div>`;
   const topIds=new Set([...maduros].filter(p=>p.alcance!=null).sort((a,b)=>b.alcance-a.alcance).slice(0,3).map(p=>p.media_id));
