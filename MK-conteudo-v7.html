@@ -235,6 +235,21 @@ main{margin-top:10px}
 .stday{padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}.stday:last-child{border-bottom:none}
 .stday .sd{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom);margin-bottom:2px}
 .stday .st{color:var(--ink-soft)}
+/* v7.3: Instagram */
+.igbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 12px;font-size:12.5px;color:var(--ink-soft)}
+.igbar button{background:var(--marrom);color:#fff;border:none;border-radius:10px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.igsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.igsum div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center}
+.igsum b{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--marrom);font-weight:600;line-height:1.1}
+.igsum span{font-size:11px;color:var(--ink-soft)}
+.igpost{display:flex;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:9px;text-decoration:none;color:inherit}
+.igpost img,.igpost .noimg{flex:none;width:64px;height:80px;border-radius:9px;object-fit:cover;background:var(--line-soft)}
+.igpost .ib{flex:1;min-width:0}
+.igpost .it{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom)}
+.igpost .il{font-size:12.5px;color:var(--ink);margin:2px 0 6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.igpost .im{display:flex;flex-wrap:wrap;gap:4px 11px;font-size:12px;color:var(--ink-soft)}
+.igpost .im b{color:var(--ink);font-weight:500}
+.igpost.top{border-color:var(--nude);box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
@@ -274,6 +289,7 @@ main{margin-top:10px}
   <nav class="tabs"><div class="row">
     <button class="tab active" data-v="hoje">Hoje</button>
     <button class="tab" data-v="semana">Semana</button>
+    <button class="tab" data-v="insta">Instagram</button>
     <button class="tab" data-v="plano">Plano</button>
   </div></nav>
 
@@ -285,10 +301,11 @@ main{margin-top:10px}
   <main>
     <div class="view active" id="v-hoje"></div>
     <div class="view" id="v-semana"></div>
+    <div class="view" id="v-insta"></div>
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.2</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.3</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -577,7 +594,7 @@ function buildBriefing(p){
 let CURVIEW='hoje';
 function go(v){CURVIEW=v;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.v===v));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));render();}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
-function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderPlano();}
+function render(){if(!S)return;renderHero();renderHoje();renderSemana();renderInsta();renderPlano();}
 function renderAviso(){}
 
 function renderHero(){
@@ -679,6 +696,66 @@ function renderResultados(){
     <li>Ler tags e leads do CRM e sugerir conteúdo de valor para o WhatsApp.</li>
     <li>Propor sozinha os próximos reels, stories e anúncios pelo retorno.</li>
     <li>Usar o calendário do salão para não divulgar serviço sem agenda.</li></ul></div>`;
+  el.innerHTML=h;
+}
+/* ---- v7.3: Instagram (dados reais via Edge Function instagram-sync) ---- */
+const IG_URL=SB_URL+"/functions/v1/instagram-sync";
+let IG={carregado:false,status:null,posts:[],busy:false};
+async function igCall(body){
+  const {data:{session}}=await supa.auth.getSession();if(!session)throw new Error('Sessão expirada. Saia e entre de novo.');
+  const r=await fetch(IG_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_KEY},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({error:'resposta inválida'}));if(!r.ok||j.error)throw new Error(j.error||('erro '+r.status));return j;
+}
+async function igLoad(){
+  if(!supa||MODE!=='online'){IG.carregado=true;IG.status={offline:true};renderInsta();return;}
+  try{IG.status=await igCall({acao:'status'});
+    if(IG.status.conectado){const {data}=await supa.from('mk_instagram').select('*').order('publicado_em',{ascending:false}).limit(30);IG.posts=data||[];}
+  }catch(e){IG.status={erro:e.message};}
+  IG.carregado=true;renderInsta();
+}
+async function igSync(){
+  if(IG.busy)return;IG.busy=true;renderInsta();
+  try{const j=await igCall({acao:'sync'});toast('Instagram atualizado ✓ ('+j.posts+' posts)');IG.carregado=false;}
+  catch(e){toast('Erro: '+e.message);}
+  IG.busy=false;await igLoad();
+}
+async function igConectar(){
+  const t=(document.getElementById('igtoken')||{}).value||'';if(!t.trim())return toast('Cole o token primeiro');
+  IG.busy=true;renderInsta();
+  try{const j=await igCall({acao:'conectar',token:t.trim()});toast('Conectado: @'+j.conta+' ✓');IG.carregado=false;}
+  catch(e){toast('Erro: '+e.message);}
+  IG.busy=false;await igLoad();
+}
+const igN=v=>v==null?'—':Number(v).toLocaleString('pt-BR');
+function renderInsta(){
+  const el=document.getElementById('v-insta');if(!el)return;
+  let h=`<div class="section-title">Instagram</div>`;
+  if(!IG.carregado){el.innerHTML=h+`<div class="empty"><div class="muted">Carregando…</div></div>`;if(CURVIEW==='insta')igLoad();return;}
+  const st=IG.status||{};
+  if(st.offline){el.innerHTML=h+`<div class="empty"><div class="big">Sem conexão</div><div class="muted">Entre com a conta para ver os números do Instagram.</div></div>`;return;}
+  if(st.erro){el.innerHTML=h+`<div class="empty"><div class="big">Não consegui carregar</div><div class="muted">${st.erro}</div></div>`;return;}
+  if(!st.conectado){
+    el.innerHTML=h+`<div class="post"><h3 style="font-size:19px">Conectar o Instagram</h3>
+      <p class="muted" style="font-size:13px;line-height:1.5">Depois de conectado, o app busca sozinho o alcance, as visualizações, os salvamentos e os compartilhamentos de cada post. Não precisa digitar nada.</p>
+      <div class="field"><label>Token de acesso (gerado no painel da Meta)</label><input id="igtoken" placeholder="IGAA…" autocomplete="off"></div>
+      <button class="btn primary" style="width:100%;padding:13px" onclick="igConectar()" ${IG.busy?'disabled':''}>${IG.busy?'Conectando…':'Conectar'}</button></div>`;
+    return;}
+  const quando=st.atualizado_em?new Date(st.atualizado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'nunca';
+  h+=`<div class="igbar"><span>@${st.conta} · atualizado ${quando}</span><button onclick="igSync()" ${IG.busy?'disabled':''}>${IG.busy?'Atualizando…':'Atualizar'}</button></div>`;
+  const P=IG.posts;
+  if(!P.length){el.innerHTML=h+`<div class="empty"><div class="big">Nenhum post ainda</div><div class="muted">Toque em Atualizar para buscar os posts.</div></div>`;return;}
+  const lim=Date.now()-30*86400000;const rec=P.filter(p=>new Date(p.publicado_em).getTime()>=lim);
+  const med=(arr,k)=>{const v=arr.map(p=>p[k]).filter(x=>x!=null);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null;};
+  const reels=rec.filter(p=>p.tipo==='Reels'),car=rec.filter(p=>p.tipo==='Carrossel');
+  h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel</span></div></div>`;
+  const topIds=new Set([...rec].filter(p=>p.alcance!=null).sort((a,b)=>b.alcance-a.alcance).slice(0,3).map(p=>p.media_id));
+  P.forEach(p=>{const d=new Date(p.publicado_em);const top=topIds.has(p.media_id);
+    h+=`<a class="igpost${top?' top':''}" href="${p.link}" target="_blank" rel="noopener">
+      ${p.thumb?`<img src="${p.thumb}" alt="" loading="lazy" onerror="this.outerHTML='<div class=noimg></div>'">`:'<div class="noimg"></div>'}
+      <div class="ib"><div class="it">${top?'🏆 ':''}${p.tipo} · ${DIAS[d.getDay()]} ${fmtShort(d)}</div>
+      <div class="il">${(p.legenda||'(sem legenda)').replace(/</g,'&lt;')}</div>
+      <div class="im"><span>Alcance <b>${igN(p.alcance)}</b></span>${p.views!=null?`<span>Views <b>${igN(p.views)}</b></span>`:''}<span>Salvos <b>${igN(p.salvos)}</b></span><span>Compart. <b>${igN(p.compartilhamentos)}</b></span><span>💬 <b>${igN(p.comentarios)}</b></span></div></div></a>`;});
+  h+=`<p class="muted" style="font-size:11.5px;text-align:center">🏆 = os 3 de maior alcance nos últimos 30 dias. Toque no post para abrir no Instagram.</p>`;
   el.innerHTML=h;
 }
 function setMetric(i,k,v){S.metricas[i][k]=v;saveState();}
