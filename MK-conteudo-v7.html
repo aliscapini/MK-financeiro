@@ -255,6 +255,18 @@ html,body{max-width:100%;overflow-x:hidden}
 .igpost .im{display:flex;flex-wrap:wrap;gap:4px 11px;font-size:12px;color:var(--ink-soft)}
 .igpost .im b{color:var(--ink);font-weight:500}
 .igpost.top{border-color:var(--nude);box-shadow:var(--shadow)}
+/* v7.5: Instagram × Salão */
+.xsec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.xrow{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.xrow:last-child{border-bottom:none}
+.xrow.h{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--marrom);font-weight:600}
+.xrow .t{color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+.xrow .t small{display:block;color:var(--ink-soft);font-weight:400;font-size:11px}
+.xrow .n{text-align:right;color:var(--ink)}
+.xrow .n small{display:block;font-size:10.5px;color:var(--ink-soft)}
+.up{color:var(--verde)}.down{color:var(--vermelho)}
+.xins{background:#f4ece5;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--ink-soft)}
+.xins b{color:var(--ink);font-weight:500}
 </style>
 </head>
 <body>
@@ -310,7 +322,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="view" id="v-plano"></div>
   </main>
 
-  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.4</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
+  <div class="footer">Salão de Beleza MK · Central de Conteúdo <b>v7.5</b> · outubro/2026 · guia de conteúdo · 50% mechas</div>
 </div>
 </div>
 
@@ -705,7 +717,7 @@ function renderResultados(){
 }
 /* ---- v7.3: Instagram (dados reais via Edge Function instagram-sync) ---- */
 const IG_URL=SB_URL+"/functions/v1/instagram-sync";
-let IG={carregado:false,status:null,posts:[],busy:false};
+let IG={carregado:false,status:null,posts:[],busy:false,fin:null};
 async function igCall(body){
   const {data:{session}}=await supa.auth.getSession();if(!session)throw new Error('Sessão expirada. Saia e entre de novo.');
   const r=await fetch(IG_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_KEY},body:JSON.stringify(body)});
@@ -715,6 +727,7 @@ async function igLoad(){
   if(!supa||MODE!=='online'){IG.carregado=true;IG.status={offline:true};renderInsta();return;}
   try{IG.status=await igCall({acao:'status'});
     if(IG.status.conectado){const {data}=await supa.from('mk_instagram').select('*').order('publicado_em',{ascending:false}).limit(30);IG.posts=data||[];}
+    try{const {data:f,error}=await supa.rpc('mk_cruzamento_conteudo',{dias:30});IG.fin=error?null:f;}catch(e){IG.fin=null;}
   }catch(e){IG.status={erro:e.message};}
   IG.carregado=true;renderInsta();
 }
@@ -732,6 +745,50 @@ async function igConectar(){
   IG.busy=false;await igLoad();
 }
 const igN=v=>v==null?'—':Number(v).toLocaleString('pt-BR');
+const igR=v=>v==null?'':'R$ '+Math.round(Number(v)).toLocaleString('pt-BR');
+/* mesmo agrupamento da função mk_tema_servico do Supabase, aplicado à legenda do post */
+function temaPost(txt){const n=(txt||'').toLowerCase();
+  if(/mecha|loir|luzes|ilumin|gloss|tonaliz|blond/.test(n))return 'Mechas e loiro';
+  if(/colora|retoque|raiz|grisal|cabelo branco|brancos/.test(n))return 'Coloração';
+  if(/alinhament|blindag|progressiv|selagem|liso/.test(n))return 'Alinhamento e blindagem';
+  if(/tratament|protocolo|hidrata|k-pa|kpak|joico|reconstru|cauteriz/.test(n))return 'Tratamentos';
+  if(/mega ?hair/.test(n))return 'Mega hair';
+  if(/maquiag|make|penteado|noiva|sobrancel|c[ií]lio/.test(n))return 'Make e penteado';
+  if(/unha|manicure|pedicure|podolog/.test(n))return 'Unhas e podologia';
+  if(/corte|escova|franja/.test(n))return 'Corte e escova';
+  return 'Salão (geral)';}
+function renderCruzamento(rec){
+  const F=IG.fin;if(!F||!F.temas)return '';
+  const pm={};rec.forEach(p=>{const t=temaPost(p.legenda);(pm[t]=pm[t]||{posts:0,alc:0});pm[t].posts++;pm[t].alc+=(p.alcance||0);});
+  const temas=[...new Set([...F.temas.map(t=>t.tema),...Object.keys(pm)])].filter(t=>t!=='Outros');
+  const fm={};F.temas.forEach(t=>fm[t.tema]=t);
+  const linhas=temas.map(t=>({tema:t,p:pm[t]||{posts:0,alc:0},f:fm[t]||{atend:0,atend_ant:0,novas:0}}))
+    .sort((a,b)=>(b.f.atend||0)-(a.f.atend||0)||(b.p.posts-a.p.posts));
+  let h=`<div class="section-title">Instagram × Salão</div>
+   <p class="ignote">Últimos ${F.dias} dias: posts por tema (pela legenda) e atendimentos do Financeiro no mesmo período, comparados aos ${F.dias} dias anteriores.</p>`;
+  // leitura automática
+  const semPost=linhas.filter(l=>l.p.posts===0&&(l.f.atend||0)>=8).map(l=>l.tema);
+  const mech=linhas.find(l=>l.tema==='Mechas e loiro');
+  let ins=[];
+  if(mech&&mech.f.atend_ant!=null){const d=mech.f.atend-mech.f.atend_ant;ins.push(`<b>Mechas:</b> ${mech.p.posts} post(s) e ${mech.f.atend} atendimentos (${d>=0?'+':''}${d} vs. período anterior), ${mech.f.novas} de clientes novas.`);}
+  if(semPost.length)ins.push(`<b>Muito procurado e sem post:</b> ${semPost.join(', ')}. Vale um conteúdo, já que a demanda existe.`);
+  if(ins.length)h+=`<div class="xins">${ins.join('<br>')}</div>`;
+  h+=`<div class="xsec"><div class="xrow h"><div>Tema</div><div class="n">Posts</div><div class="n">Atend.</div><div class="n">Novas</div></div>`;
+  linhas.forEach(l=>{const a=l.f.atend||0,b=l.f.atend_ant||0,d=a-b;
+    h+=`<div class="xrow"><div class="t">${l.tema}<small>${l.p.posts?'alcance '+igN(l.p.alc):'sem post'}${F.ver_valores&&l.f.valor?' · '+igR(l.f.valor):''}</small></div>
+      <div class="n">${l.p.posts}</div>
+      <div class="n">${a}<small class="${d>0?'up':d<0?'down':''}">${d>0?'▲ '+d:d<0?'▼ '+(-d):'='}</small></div>
+      <div class="n">${l.f.novas||0}</div></div>`;});
+  h+=`</div>`;
+  // semanas: posts x clientes novas
+  if(F.semanas&&F.semanas.length){
+    const ps={};IG.posts.forEach(p=>{const d=new Date(p.publicado_em);const m=new Date(d);m.setHours(12,0,0,0);m.setDate(m.getDate()-((m.getDay()+6)%7));const k=iso(m);(ps[k]=ps[k]||{n:0,alc:0});ps[k].n++;ps[k].alc+=(p.alcance||0);});
+    h+=`<div class="section-title" style="font-size:22px">Semana a semana</div><div class="xsec"><div class="xrow h"><div>Semana</div><div class="n">Posts</div><div class="n">Atend.</div><div class="n">Novas</div></div>`;
+    [...F.semanas].reverse().slice(0,8).forEach(w=>{const p=ps[w.semana]||{n:0,alc:0};const d=parse(w.semana);
+      h+=`<div class="xrow"><div class="t">${fmtShort(d)}<small>${p.n?'alcance '+igN(p.alc):'sem post'}${F.ver_valores&&w.valor?' · '+igR(w.valor):''}</small></div><div class="n">${p.n}</div><div class="n">${w.comandas}</div><div class="n">${w.novas}</div></div>`;});
+    h+=`</div>`;}
+  h+=`<p class="ignote">"Novas" = primeira comanda da cliente no Financeiro (o sistema começou em julho, então clientes antigas que voltaram pela primeira vez desde então também contam). ${F.ver_valores?'Os valores em R$ aparecem só para quem tem acesso ao Financeiro.':''}</p>`;
+  return h;}
 function renderInsta(){
   const el=document.getElementById('v-insta');if(!el)return;
   let h=`<div class="section-title">Instagram</div>`;
@@ -756,6 +813,8 @@ function renderInsta(){
   const reels=maduros.filter(p=>p.tipo==='Reels'),car=maduros.filter(p=>p.tipo==='Carrossel');
   h+=`<div class="igsum"><div><b>${rec.length}</b><span>posts em 30 dias</span></div><div><b>${igN(med(reels,'alcance'))}</b><span>alcance médio · reels</span></div><div><b>${igN(med(car,'alcance'))}</b><span>alcance médio · carrossel</span></div></div>
   <p class="ignote">Médias dos últimos 30 dias, sem contar posts com menos de 3 dias (os números deles ainda estão subindo).</p>`;
+  h+=renderCruzamento(rec);
+  h+=`<div class="section-title" style="font-size:22px">Posts</div>`;
   const topIds=new Set([...maduros].filter(p=>p.alcance!=null).sort((a,b)=>b.alcance-a.alcance).slice(0,3).map(p=>p.media_id));
   P.forEach(p=>{const d=new Date(p.publicado_em);const top=topIds.has(p.media_id);
     h+=`<a class="igpost${top?' top':''}" href="${p.link}" target="_blank" rel="noopener">
