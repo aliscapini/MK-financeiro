@@ -10,8 +10,10 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const IG = "https://graph.instagram.com";
+const HOSTS: Record<string, string> = { instagram: "https://graph.instagram.com", facebook: "https://graph.facebook.com" };
 const V = "v23.0";
+const IG_ID_PADRAO = "17841404133101578"; // @michelekrasniakbc
+let IG = HOSTS.instagram;
 
 async function ig(path: string) {
   const r = await fetch(`${IG}/${path}`);
@@ -20,6 +22,7 @@ async function ig(path: string) {
   return j;
 }
 
+let ultimoErroInsights = "";
 async function insights(id: string, token: string) {
   // tenta o conjunto completo; se a Meta recusar alguma métrica para esse tipo de post, cai para o básico
   const tentativas = [
@@ -33,7 +36,7 @@ async function insights(id: string, token: string) {
       const out: Record<string, number> = {};
       for (const it of j.data || []) out[it.name] = it.values?.[0]?.value ?? it.total_value?.value ?? null;
       return out;
-    } catch (_) { /* tenta o próximo */ }
+    } catch (e) { ultimoErroInsights = String((e as Error).message || e); }
   }
   return {};
 }
@@ -55,10 +58,21 @@ Deno.serve(async (req) => {
     const acao = body.acao || "sync";
 
     if (acao === "conectar") {
-      let token = String(body.token || "").trim();
+      const token = String(body.token || "").trim();
       if (!token) return J({ error: "token vazio" }, 400);
-      const me = await ig(`${V}/me?fields=username&access_token=${token}`);
-      await db.from("mk_instagram_token").upsert({ id: "mk", token, conta: me.username, renovado_em: new Date().toISOString() });
+      // token do Instagram (IGAA…) -> graph.instagram.com ; token de sistema do login do Facebook -> graph.facebook.com
+      let host = "instagram", igId: string | null = null, conta = "";
+      try {
+        IG = HOSTS.instagram;
+        const me = await ig(`${V}/me?fields=user_id,username&access_token=${token}`);
+        conta = me.username; igId = me.user_id || me.id;
+      } catch (_) {
+        host = "facebook"; IG = HOSTS.facebook;
+        igId = String(body.ig_id || IG_ID_PADRAO);
+        const me = await ig(`${V}/${igId}?fields=username&access_token=${token}`);
+        conta = me.username;
+      }
+      await db.from("mk_instagram_token").upsert({ id: "mk", token, conta, host, ig_id: igId, renovado_em: new Date().toISOString() });
     }
 
     const { data: row } = await db.from("mk_instagram_token").select("*").eq("id", "mk").maybeSingle();
@@ -71,8 +85,10 @@ Deno.serve(async (req) => {
 
     // 2) renova o token (vale 60 dias) quando já passou de ~20 dias
     let token = row.token;
+    IG = HOSTS[row.host || "instagram"];
+    const quem = row.host === "facebook" ? row.ig_id : "me";
     const idade = (Date.now() - new Date(row.renovado_em).getTime()) / 86400000;
-    if (idade > 20) {
+    if (row.host !== "facebook" && idade > 20) { // token de sistema (Facebook) não expira
       try {
         const r = await ig(`refresh_access_token?grant_type=ig_refresh_token&access_token=${token}`);
         token = r.access_token;
@@ -81,11 +97,13 @@ Deno.serve(async (req) => {
     }
 
     // 3) últimos 30 posts + métricas
-    const media = await ig(`${V}/me/media?fields=id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=30&access_token=${token}`);
+    const media = await ig(`${V}/${quem}/media?fields=id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=30&access_token=${token}`);
     const linhas = [];
+    let semMetricas = 0;
     for (const m of media.data || []) {
       const tipo = m.media_product_type === "REELS" ? "Reels" : m.media_type === "CAROUSEL_ALBUM" ? "Carrossel" : m.media_type === "VIDEO" ? "Vídeo" : "Foto";
       const s = await insights(m.id, token);
+      if (s.reach == null) semMetricas++;
       linhas.push({
         media_id: m.id, tipo, legenda: (m.caption || "").slice(0, 300), link: m.permalink,
         thumb: m.thumbnail_url || m.media_url || null, publicado_em: m.timestamp,
@@ -99,7 +117,7 @@ Deno.serve(async (req) => {
       const { error } = await db.from("mk_instagram").upsert(linhas);
       if (error) return J({ error: error.message }, 500);
     }
-    return J({ conectado: true, conta: row.conta, posts: linhas.length });
+    return J({ conectado: true, conta: row.conta, posts: linhas.length, sem_metricas: semMetricas, aviso: semMetricas ? ultimoErroInsights.slice(0, 200) : undefined });
   } catch (e) {
     return J({ error: String((e as Error).message || e) }, 500);
   }
