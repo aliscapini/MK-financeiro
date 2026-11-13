@@ -2445,17 +2445,6 @@
     var r=await fetch(AG_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk,'apikey':SUPABASE_KEY},body:JSON.stringify(body)});
     var j=await r.json().catch(function(){return {};}); if(!r.ok||j.error) throw new Error(j.error||('erro '+r.status)); return j;
   }
-  async function agCarregar(forcar){
-    var dia=agProximoDia();
-    if(!forcar && AG.dia===dia && AG.estado && AG.estado!=='erro') { renderAgenda(); return; }
-    AG.dia=dia; AG.estado='carregando'; renderAgenda();
-    try{
-      var j=await agChamar({acao:'eventos',de:dia,ate:dia});
-      if(!j.conectado){ AG.estado='desconectado'; }
-      else { AG.estado='ok'; AG.eventos=j.eventos||[]; AG.erros=j.erros||[]; }
-    }catch(e){ AG.estado='erro'; AG.msg=String(e.message||e); }
-    renderAgenda();
-  }
   async function agConectar(){
     var ags=[{nome:'Michele',url:($('ag-url-1')||{}).value||''}].filter(function(a){return a.url.trim();});
     if(!ags.length){ showToast('Cole pelo menos um endereço'); return; }
@@ -2485,11 +2474,35 @@
     cands=cands.slice().sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome)); }).slice(0,30);
     return {cands:cands};
   }
-  function agMontar(){
+  function agDiaAnterior(){ var d=agIsoMais(todayISO(),-1); while([0,1].indexOf(new Date(d+'T12:00:00').getDay())>=0) d=agIsoMais(d,-1); return d; }
+  async function agCarregar(forcar){
+    var dia=agProximoDia(), ant=agDiaAnterior();
+    if(!forcar && AG.dia===dia && AG.estado && AG.estado!=='erro') { renderAgenda(); return; }
+    AG.dia=dia; AG.diaAnt=ant; AG.estado='carregando'; renderAgenda();
+    try{
+      var j=await agChamar({acao:'eventos',de:ant,ate:dia});
+      if(!j.conectado){ AG.estado='desconectado'; }
+      else { AG.estado='ok'; AG.eventos=j.eventos||[]; AG.erros=j.erros||[]; }
+    }catch(e){ AG.estado='erro'; AG.msg=String(e.message||e); }
+    renderAgenda();
+  }
+  function agQuando(dia){
+    var dsem=AG_DIAS[new Date(dia+'T12:00:00').getDay()], hoje=todayISO();
+    if(dia===agIsoMais(hoje,1)) return 'amanhã';
+    if(dia===agIsoMais(hoje,-1)) return 'ontem';
+    var fds=(dsem==='sábado'||dsem==='domingo'); return (dia<hoje?(fds?'no ':'na '):'de ')+(fds?dsem:dsem+'-feira');
+  }
+  // tipo 'conf' = confirmar o próximo dia · 'falta' = conferir quem estava na agenda do último dia e não tem comanda
+  function agMontar(tipo){
+    var dia=tipo==='falta'?AG.diaAnt:AG.dia, regra=tipo==='falta'?'noshow':'confirmacao';
     var cls=load(KEYS.clientes), cf=getConfig(), mapa=cf.agendaMapa||{}, log=load(KEYS.retornos);
-    var feitos={}; log.forEach(function(l){ if(l.regra==='confirmacao') feitos[l.clienteId+'|'+l.ref]=l.acao; });
+    var feitos={}, faltas={}; log.forEach(function(l){
+      if(l.regra===regra) feitos[l.clienteId+'|'+l.ref]=l.acao;
+      if(l.regra==='noshow' && l.acao!=='veio') faltas[l.clienteId]=(faltas[l.clienteId]||0)+1; });
+    var veio={}; if(tipo==='falta') load(KEYS.comandas).forEach(function(c){ if(c.data===dia && c.clienteId) veio[c.clienteId]=1; });
     var grupos={}, ordem=[];
     (AG.eventos||[]).forEach(function(ev){
+      if(ev.data && ev.data!==dia) return;
       var tn=normNome(ev.titulo); if(!tn || AG_IGNORAR.test(tn)) return;
       if(ev.fim && ev.inicio && (parseInt(ev.fim)-parseInt(ev.inicio))>=6) return; // bloqueios de dia inteiro
       var p=agSeparar(ev.titulo); var chave=normNome(p.nome); if(!chave) return;
@@ -2498,18 +2511,38 @@
       var sv=agAcento(p.serv); if(sv && g.servs.indexOf(sv)<0) g.servs.push(sv);
       if(g.agendas.indexOf(ev.agenda)<0) g.agendas.push(ev.agenda);
     });
-    var amanha=AG.dia===agIsoMais(todayISO(),1);
-    var dsem=AG_DIAS[new Date(AG.dia+'T12:00:00').getDay()];
-    var quando=(amanha?'amanhã, ':'de '+dsem+'-feira, ').replace('sábado-feira','sábado')+fmtData(AG.dia).substr(0,5);
+    var quando=agQuando(dia), ddmm=fmtData(dia).substr(0,5);
     return ordem.map(function(k){
       var g=grupos[k], ach=agAchar(g.nome, cls, mapa), c=ach.cli;
       var nomeMsg=primeiroNome(c?c.nome:g.nome)||'mais bunita';
       var hora=g.hora.replace(':00','h').replace(':','h').replace(/^0/,'');
       var servTxt=g.servs.length?' ('+g.servs.join(' + ')+')':'';
-      var texto='Oi, '+nomeMsg+'! 💛 Passando pra lembrar do seu horário '+quando+', às '+hora+servTxt+', aqui no Salão de Beleza MK. Podemos confirmar? ✨';
+      var texto=tipo==='falta'
+        ? 'Oi, '+nomeMsg+'! 💛 Sentimos sua falta '+quando+'. Aconteceu alguma coisa? Se quiser, te ajudo a remarcar ✨'
+        : 'Oi, '+nomeMsg+'! 💛 Passando pra lembrar do seu horário '+quando+', '+ddmm+', às '+hora+servTxt+', aqui no Salão de Beleza MK. Podemos confirmar? ✨';
       var cid=c?c.id:('ag:'+k);
-      return {id:k, g:g, cli:c, cands:ach.cands, salvo:!!ach.salvo, tel:c?soDigitos(c.telefone):'', texto:texto, hora:g.hora, cid:cid, status:feitos[cid+'|'+AG.dia]||''};
+      var status=feitos[cid+'|'+dia]||'';
+      if(tipo==='falta' && c && veio[c.id]) status='veio';
+      return {id:tipo+'|'+k, tipo:tipo, dia:dia, regra:regra, g:g, cli:c, cands:ach.cands, salvo:!!ach.salvo, tel:c?soDigitos(c.telefone):'', texto:texto, hora:g.hora, cid:cid, status:status, faltas:faltas[cid]||0};
     }).sort(function(a,b){ return a.hora.localeCompare(b.hora); });
+  }
+  function agCard(it){
+    var c=it.cli, sel='';
+    if(!c || !it.salvo){
+      sel='<select class="form-select sm" data-ag-cli="'+esc(it.id)+'" style="max-width:100%;margin-top:6px"><option value="">'+(c?'✓ '+esc(c.nome)+' (trocar…)':(it.cands.length?'Qual cliente é? Escolha…':'Não achei na base'))+'</option>'+
+        it.cands.filter(function(x){return !c||x.id!==c.id;}).map(function(x){ return '<option value="'+esc(x.id)+'">'+esc(x.nome)+(telValido(soDigitos(x.telefone))?' · '+fmtTel(soDigitos(x.telefone)):'')+'</option>'; }).join('')+'</select>';
+    }
+    var precisaTel=!telValido(it.tel);
+    var badge=esc(it.hora)+(it.tipo==='falta'&&it.faltas?' · já faltou '+it.faltas+'x':'');
+    return '<div class="panel" style="margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
+        '<div style="min-width:0;flex:1"><strong style="font-size:15px">'+esc(c?c.nome:it.g.nome)+'</strong><br><span class="text-muted" style="font-size:12px">Na agenda: “'+esc(it.g.nome+(it.g.servs.length?' - '+it.g.servs.join(' + '):''))+'”'+(c&&telValido(it.tel)?' · '+esc(fmtTel(it.tel)):'')+'</span>'+sel+'</div>'+
+        '<span class="badge '+(it.tipo==='falta'?'badge-fiado':'badge-nude')+'">'+badge+'</span></div>'+
+      (precisaTel?'<input class="form-input sm" id="ag-tel-'+esc(it.id)+'" inputmode="tel" placeholder="WhatsApp da cliente (com DDD)" style="margin-top:8px;width:100%">':'')+
+      '<div style="white-space:pre-wrap;font-size:13px;background:var(--offwhite);border-radius:8px;padding:10px 12px;margin:10px 0">'+esc(it.texto)+'</div>'+
+      '<div class="action-row"><button class="btn btn-primary" data-action="ag-enviar" data-id="'+esc(it.id)+'">Enviar no WhatsApp</button>'+
+      (it.tipo==='falta'?'<button class="btn btn-outline" data-action="ag-veio" data-id="'+esc(it.id)+'">Ela veio</button>':'')+
+      '<button class="btn btn-outline" data-action="ag-pular" data-id="'+esc(it.id)+'">Pular</button></div></div>';
   }
   function renderAgenda(){
     var box=$('ag-box'); if(!box) return;
@@ -2521,33 +2554,26 @@
     if(AG.estado==='desconectado'){
       box.innerHTML=tit+'<div class="panel" style="margin-bottom:18px"><p style="font-size:13px;margin-bottom:10px"><strong>Conectar o Google Agenda</strong> (uma vez só). No computador, abra o Google Agenda → ⚙️ Configurações → clique em <em>Michele Krasniak</em> à esquerda → <em>Integrar agenda</em> → copie o <strong>Endereço secreto no formato iCal</strong> e cole aqui.</p>'+
         '<div class="form-group" style="margin-bottom:8px"><label class="text-muted" style="font-size:12px">Agenda da Michele</label><input class="form-input" id="ag-url-1" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" autocomplete="off"></div>'+
-        
         '<button class="btn btn-primary" id="ag-conectar-btn" data-action="ag-conectar">Conectar</button>'+
         '<p class="text-muted" style="font-size:11px;margin-top:8px">O endereço fica guardado só no servidor e serve apenas para ler os horários.</p></div>';
       return; }
     if(AG.estado!=='ok'){ box.innerHTML=''; return; }
-    var itens=agMontar(); AG.itens=itens;
+    var h='';
+    // faltas do último dia de atendimento
+    var fl=agMontar('falta'), fpend=fl.filter(function(i){return !i.status;});
+    if(fpend.length){
+      var dA=AG_DIAS[new Date(AG.diaAnt+'T12:00:00').getDay()];
+      h+='<div class="section-header" style="margin-top:0"><div class="section-title">Não vieram? — '+dA+', '+fmtData(AG.diaAnt).substr(0,5)+'</div></div>'+
+        '<div class="info-box" style="margin-bottom:12px">Estavam na agenda e não têm comanda nesse dia. Se ela veio e a comanda só não foi lançada, toque em <strong>Ela veio</strong> (e lance a comanda).</div>'+
+        fpend.map(agCard).join('')+'<div style="margin-bottom:18px"></div>';
+    }
+    var itens=agMontar('conf'); AG.itens=fl.concat(itens);
     var pend=itens.filter(function(i){return !i.status;}), feitas=itens.length-pend.length;
-    var h=tit;
+    h+=tit;
     if(AG.erros.length) h+='<div class="info-box" style="margin-bottom:10px">'+AG.erros.map(esc).join('<br>')+'</div>';
     if(!itens.length) h+='<div class="text-muted" style="margin-bottom:18px">Nenhum horário na agenda para esse dia.</div>';
     else if(!pend.length) h+='<div class="text-muted" style="margin-bottom:18px">Tudo confirmado ✓ ('+feitas+' cliente'+(feitas>1?'s':'')+')</div>';
-    pend.forEach(function(it){
-      var c=it.cli, sel='';
-      if(!c || !it.salvo){
-        sel='<select class="form-select sm" data-ag-cli="'+esc(it.id)+'" style="max-width:100%;margin-top:6px"><option value="">'+(c?'✓ '+esc(c.nome)+' (trocar…)':(it.cands.length?'Qual cliente é? Escolha…':'Não achei na base'))+'</option>'+
-          it.cands.filter(function(x){return !c||x.id!==c.id;}).map(function(x){ return '<option value="'+esc(x.id)+'">'+esc(x.nome)+(telValido(soDigitos(x.telefone))?' · '+fmtTel(soDigitos(x.telefone)):'')+'</option>'; }).join('')+'</select>';
-      }
-      var precisaTel=!telValido(it.tel);
-      h+='<div class="panel" style="margin-bottom:12px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
-          '<div style="min-width:0;flex:1"><strong style="font-size:15px">'+esc(c?c.nome:it.g.nome)+'</strong><br><span class="text-muted" style="font-size:12px">Na agenda: “'+esc(it.g.nome+(it.g.servs.length?' - '+it.g.servs.join(' + '):''))+'”'+(c&&telValido(it.tel)?' · '+esc(fmtTel(it.tel)):'')+'</span>'+sel+'</div>'+
-          '<span class="badge badge-nude">'+esc(it.hora)+'</span></div>'+
-        (precisaTel?'<input class="form-input sm" id="ag-tel-'+esc(it.id)+'" inputmode="tel" placeholder="WhatsApp da cliente (com DDD)" style="margin-top:8px;width:100%">':'')+
-        '<div style="white-space:pre-wrap;font-size:13px;background:var(--offwhite);border-radius:8px;padding:10px 12px;margin:10px 0">'+esc(it.texto)+'</div>'+
-        '<div class="action-row"><button class="btn btn-primary" data-action="ag-enviar" data-id="'+esc(it.id)+'">Enviar no WhatsApp</button>'+
-        '<button class="btn btn-outline" data-action="ag-pular" data-id="'+esc(it.id)+'">Pular</button></div></div>';
-    });
+    h+=pend.map(agCard).join('');
     if(pend.length && feitas) h+='<div class="text-muted" style="font-size:12px;margin:-4px 0 18px">'+feitas+' já confirmada'+(feitas>1?'s':'')+' para esse dia.</div>';
     else if(pend.length) h+='<div style="margin-bottom:18px"></div>';
     box.innerHTML=h;
@@ -2556,7 +2582,7 @@
   function agEscolher(id, cliId){
     var it=agItem(id); if(!it||!cliId) return; var cf=getConfig(); cf.agendaMapa=cf.agendaMapa||{}; cf.agendaMapa[it.g.chave]=cliId; save(KEYS.config,cf); renderAgenda();
   }
-  function agRegistrar(it,acao){ var log=load(KEYS.retornos); log.push({id:genId(),clienteId:it.cid,regra:'confirmacao',ref:AG.dia,data:todayISO(),acao:acao}); save(KEYS.retornos,log); }
+  function agRegistrar(it,acao){ var log=load(KEYS.retornos); log.push({id:genId(),clienteId:it.cid,regra:it.regra,ref:it.dia,data:todayISO(),acao:acao}); save(KEYS.retornos,log); }
   function agEnviar(id){
     var it=agItem(id); if(!it) return; var tel=it.tel;
     if(!telValido(tel)){
@@ -2565,9 +2591,10 @@
     }
     if(it.cli && !it.salvo){ var cf=getConfig(); cf.agendaMapa=cf.agendaMapa||{}; cf.agendaMapa[it.g.chave]=it.cli.id; save(KEYS.config,cf); }
     window.open('https://wa.me/55'+tel+'?text='+encodeURIComponent(it.texto),'_blank');
-    agRegistrar(it,'enviado'); renderAgenda(); showToast('Confirmação de '+(primeiroNome(it.cli?it.cli.nome:it.g.nome)||'cliente')+' registrada');
+    agRegistrar(it,'enviado'); renderAgenda(); showToast((it.tipo==='falta'?'Mensagem':'Confirmação')+' de '+(primeiroNome(it.cli?it.cli.nome:it.g.nome)||'cliente')+' registrada');
   }
   function agPular(id){ var it=agItem(id); if(!it) return; agRegistrar(it,'pulado'); renderAgenda(); }
+  function agVeio(id){ var it=agItem(id); if(!it) return; agRegistrar(it,'veio'); renderAgenda(); showToast('Ok! Não esqueça de lançar a comanda'); }
 
   // ===== CAIXA DIÁRIO =====
   function getConfig(){ var c=load(KEYS.config); if(Array.isArray(c)) c={}; return c||{}; }
@@ -3486,6 +3513,7 @@
       case 'ag-atualizar': agCarregar(true); break;
       case 'ag-enviar': agEnviar(id); break;
       case 'ag-pular': agPular(id); break;
+      case 'ag-veio': agVeio(id); break;
     }
   });
 
