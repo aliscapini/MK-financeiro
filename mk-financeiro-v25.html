@@ -2457,7 +2457,7 @@
     renderAgenda();
   }
   async function agConectar(){
-    var ags=[{nome:'Michele',url:($('ag-url-1')||{}).value||''},{nome:'Cleia',url:($('ag-url-2')||{}).value||''}].filter(function(a){return a.url.trim();});
+    var ags=[{nome:'Michele',url:($('ag-url-1')||{}).value||''}].filter(function(a){return a.url.trim();});
     if(!ags.length){ showToast('Cole pelo menos um endereço'); return; }
     var b=$('ag-conectar-btn'); if(b){ b.disabled=true; b.textContent='Conectando…'; }
     try{ await agChamar({acao:'conectar',agendas:ags}); showToast('Google Agenda conectado ✨'); agCarregar(true); }
@@ -2519,9 +2519,9 @@
     if(AG.estado==='carregando'){ box.innerHTML=tit+'<div class="text-muted" style="margin-bottom:18px">Lendo o Google Agenda…</div>'; return; }
     if(AG.estado==='erro'){ box.innerHTML=tit+'<div class="info-box" style="margin-bottom:18px">Não consegui ler a agenda: '+esc(AG.msg)+'</div>'; return; }
     if(AG.estado==='desconectado'){
-      box.innerHTML=tit+'<div class="panel" style="margin-bottom:18px"><p style="font-size:13px;margin-bottom:10px"><strong>Conectar o Google Agenda</strong> (uma vez só). No computador, abra o Google Agenda → ⚙️ Configurações → clique na agenda à esquerda → <em>Integrar agenda</em> → copie o <strong>Endereço secreto no formato iCal</strong> e cole aqui.</p>'+
+      box.innerHTML=tit+'<div class="panel" style="margin-bottom:18px"><p style="font-size:13px;margin-bottom:10px"><strong>Conectar o Google Agenda</strong> (uma vez só). No computador, abra o Google Agenda → ⚙️ Configurações → clique em <em>Michele Krasniak</em> à esquerda → <em>Integrar agenda</em> → copie o <strong>Endereço secreto no formato iCal</strong> e cole aqui.</p>'+
         '<div class="form-group" style="margin-bottom:8px"><label class="text-muted" style="font-size:12px">Agenda da Michele</label><input class="form-input" id="ag-url-1" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" autocomplete="off"></div>'+
-        '<div class="form-group" style="margin-bottom:10px"><label class="text-muted" style="font-size:12px">Agenda da Cleia</label><input class="form-input" id="ag-url-2" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" autocomplete="off"></div>'+
+        
         '<button class="btn btn-primary" id="ag-conectar-btn" data-action="ag-conectar">Conectar</button>'+
         '<p class="text-muted" style="font-size:11px;margin-top:8px">O endereço fica guardado só no servidor e serve apenas para ler os horários.</p></div>';
       return; }
