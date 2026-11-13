@@ -2462,15 +2462,19 @@
   }
   var AG_ACENTO={mao:'mão',maos:'mãos',pe:'pé',pes:'pés',hidrataçao:'hidratação',coloraçao:'coloração',coloracao:'coloração',hidratacao:'hidratação',quimica:'química',pos:'pós',pre:'pré',avaliaçao:'avaliação',avaliacao:'avaliação'};
   function agAcento(t){ return String(t||'').toLowerCase().replace(/[\/]/g,' e ').split(/\s+/).filter(Boolean).map(function(w){ return AG_ACENTO[w]||w; }).join(' ').replace(/\bpós química\b/,'pós-química').replace(/\bpré química\b/,'pré-química'); }
-  function agAchar(nome, cls, mapa){
+  function agAchar(nome, cls, mapa, veio){
     var n=normNome(nome); if(!n) return {cands:[]};
     if(mapa[n]){ var m=cls.filter(function(c){return c.id===mapa[n];})[0]; if(m) return {cli:m, cands:[m], salvo:true}; }
-    var exatos=cls.filter(function(c){ return normNome(c.nome)===n; });
-    if(exatos.length===1) return {cli:exatos[0], cands:exatos};
-    var pref=cls.filter(function(c){ var cn=normNome(c.nome); return cn.indexOf(n+' ')===0 || cn===n; });
-    if(pref.length===1 && n.indexOf(' ')>0) return {cli:pref[0], cands:pref};
-    var prim=n.split(' ')[0];
-    var cands=pref.length?pref:cls.filter(function(c){ return normNome(c.nome).split(' ')[0]===prim; });
+    var tk=n.split(' '), prim=tk[0];
+    // candidatas: todas as palavras do nome da agenda aparecem no cadastro ("Juliana Sagaz" -> "Juliana Haacke Sagaz")
+    var cands=cls.filter(function(c){ var ct=normNome(c.nome).split(' '); if(ct[0]!==prim) return false;
+      return tk.every(function(w){ return ct.indexOf(w)>=0; }); });
+    if(!cands.length) cands=cls.filter(function(c){ return normNome(c.nome).split(' ')[0]===prim; });
+    var exatos=cands.filter(function(c){ return normNome(c.nome)===n; });
+    // quem tem comanda no dia é ela (serve para as faltas)
+    if(veio){ var vv=cands.filter(function(c){ return veio[c.id]; }); if(vv.length===1) return {cli:vv[0], cands:cands, veio:true}; }
+    if(tk.length>1){ if(exatos.length===1) return {cli:exatos[0], cands:cands}; if(cands.length===1 && tk.every(function(w){return normNome(cands[0].nome).split(' ').indexOf(w)>=0;})) return {cli:cands[0], cands:cands}; }
+    else if(cands.length===1 && exatos.length===1) return {cli:exatos[0], cands:cands};
     cands=cands.slice().sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome)); }).slice(0,30);
     return {cands:cands};
   }
@@ -2513,7 +2517,7 @@
     });
     var quando=agQuando(dia), ddmm=fmtData(dia).substr(0,5);
     return ordem.map(function(k){
-      var g=grupos[k], ach=agAchar(g.nome, cls, mapa), c=ach.cli;
+      var g=grupos[k], ach=agAchar(g.nome, cls, mapa, tipo==='falta'?veio:null), c=ach.cli;
       var nomeMsg=primeiroNome(c?c.nome:g.nome)||'mais bunita';
       var hora=g.hora.replace(':00','h').replace(':','h').replace(/^0/,'');
       var servTxt=g.servs.length?' ('+g.servs.join(' + ')+')':'';
@@ -2523,6 +2527,7 @@
       var cid=c?c.id:('ag:'+k);
       var status=feitos[cid+'|'+dia]||'';
       if(tipo==='falta' && c && veio[c.id]) status='veio';
+      if(tipo==='falta' && g.servs.length && g.servs.every(function(x){return /^avalia/.test(x);})) status='avaliacao'; // avaliação gratuita não gera comanda
       return {id:tipo+'|'+k, tipo:tipo, dia:dia, regra:regra, g:g, cli:c, cands:ach.cands, salvo:!!ach.salvo, tel:c?soDigitos(c.telefone):'', texto:texto, hora:g.hora, cid:cid, status:status, faltas:faltas[cid]||0};
     }).sort(function(a,b){ return a.hora.localeCompare(b.hora); });
   }
