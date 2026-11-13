@@ -2521,14 +2521,18 @@
       var nomeMsg=primeiroNome(c?c.nome:g.nome)||'mais bunita';
       var hora=g.hora.replace(':00','h').replace(':','h').replace(/^0/,'');
       var servTxt=g.servs.length?' ('+g.servs.join(' + ')+')':'';
+      var aval=g.servs.length>0 && g.servs.every(function(x){return /^avalia/.test(x);});
       var texto=tipo==='falta'
-        ? 'Oi, '+nomeMsg+'! 💛 Sentimos sua falta '+quando+'. Aconteceu alguma coisa? Se quiser, te ajudo a remarcar ✨'
+        ? (aval
+          ? 'Oi, '+nomeMsg+'! 💛 Aqui é do Salão de Beleza MK. Sua avaliação estava marcada '+quando+' e senti sua falta! Aconteceu alguma coisa? A avaliação continua gratuita e sem compromisso: me fala o melhor dia que eu reservo um novo horário pra você ✨'
+          : 'Oi, '+nomeMsg+'! 💛 Sentimos sua falta '+quando+'. Aconteceu alguma coisa? Se quiser, te ajudo a remarcar ✨')
         : 'Oi, '+nomeMsg+'! 💛 Passando pra lembrar do seu horário '+quando+', '+ddmm+', às '+hora+servTxt+', aqui no Salão de Beleza MK. Podemos confirmar? ✨';
       var cid=c?c.id:('ag:'+k);
+      var telAg=(cf.agendaTel||{})[k]||'';
       var status=feitos[cid+'|'+dia]||'';
       if(tipo==='falta' && c && veio[c.id]) status='veio';
-      if(tipo==='falta' && g.servs.length && g.servs.every(function(x){return /^avalia/.test(x);})) status='avaliacao'; // avaliação gratuita não gera comanda
-      return {id:tipo+'|'+k, tipo:tipo, dia:dia, regra:regra, g:g, cli:c, cands:ach.cands, salvo:!!ach.salvo, tel:c?soDigitos(c.telefone):'', texto:texto, hora:g.hora, cid:cid, status:status, faltas:faltas[cid]||0};
+      if(tipo==='falta' && (cf.agendaParceria||{})[cid]) status='parceria';
+      return {id:tipo+'|'+k, tipo:tipo, dia:dia, regra:regra, g:g, cli:c, cands:ach.cands, salvo:!!ach.salvo, aval:aval, tel:(c&&telValido(soDigitos(c.telefone)))?soDigitos(c.telefone):telAg, texto:texto, hora:g.hora, cid:cid, status:status, faltas:faltas[cid]||0};
     }).sort(function(a,b){ return a.hora.localeCompare(b.hora); });
   }
   function agCard(it){
@@ -2538,7 +2542,7 @@
         it.cands.filter(function(x){return !c||x.id!==c.id;}).map(function(x){ return '<option value="'+esc(x.id)+'">'+esc(x.nome)+(telValido(soDigitos(x.telefone))?' · '+fmtTel(soDigitos(x.telefone)):'')+'</option>'; }).join('')+'</select>';
     }
     var precisaTel=!telValido(it.tel);
-    var badge=esc(it.hora)+(it.tipo==='falta'&&it.faltas?' · já faltou '+it.faltas+'x':'');
+    var badge=(it.aval&&it.tipo==='falta'?'Avaliação · ':'')+esc(it.hora)+(it.tipo==='falta'&&it.faltas?' · já faltou '+it.faltas+'x':'');
     return '<div class="panel" style="margin-bottom:12px">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
         '<div style="min-width:0;flex:1"><strong style="font-size:15px">'+esc(c?c.nome:it.g.nome)+'</strong><br><span class="text-muted" style="font-size:12px">Na agenda: “'+esc(it.g.nome+(it.g.servs.length?' - '+it.g.servs.join(' + '):''))+'”'+(c&&telValido(it.tel)?' · '+esc(fmtTel(it.tel)):'')+'</span>'+sel+'</div>'+
@@ -2546,8 +2550,10 @@
       (precisaTel?'<input class="form-input sm" id="ag-tel-'+esc(it.id)+'" inputmode="tel" placeholder="WhatsApp da cliente (com DDD)" style="margin-top:8px;width:100%">':'')+
       '<div style="white-space:pre-wrap;font-size:13px;background:var(--offwhite);border-radius:8px;padding:10px 12px;margin:10px 0">'+esc(it.texto)+'</div>'+
       '<div class="action-row"><button class="btn btn-primary" data-action="ag-enviar" data-id="'+esc(it.id)+'">Enviar no WhatsApp</button>'+
-      (it.tipo==='falta'?'<button class="btn btn-outline" data-action="ag-veio" data-id="'+esc(it.id)+'">Ela veio</button>':'')+
-      '<button class="btn btn-outline" data-action="ag-pular" data-id="'+esc(it.id)+'">Pular</button></div></div>';
+      (it.tipo==='falta'?'<button class="btn btn-outline" data-action="ag-veio" data-id="'+esc(it.id)+'">'+(it.aval?'Veio na avaliação':'Ela veio')+'</button>':'')+
+      '<button class="btn btn-outline" data-action="ag-pular" data-id="'+esc(it.id)+'">Pular</button>'+
+      (it.tipo==='falta'&&it.cli&&!it.aval?'<button class="btn btn-outline btn-sm" data-action="ag-parceria" data-id="'+esc(it.id)+'" title="Clientes de parceria/permuta nunca têm comanda">Parceria: não conferir</button>':'')+
+      '</div>'+(it.tipo==='falta'&&it.aval?'<div class="text-muted" style="font-size:11px;margin-top:8px">Lead de avaliação: depois de enviar, etiquete a conversa no WhatsApp. Se ela não responder em 3 dias, vai para "Sem retorno" e entra na recuperação de segunda.</div>':'')+'</div>';
   }
   function renderAgenda(){
     var box=$('ag-box'); if(!box) return;
@@ -2569,7 +2575,7 @@
     if(fpend.length){
       var dA=AG_DIAS[new Date(AG.diaAnt+'T12:00:00').getDay()];
       h+='<div class="section-header" style="margin-top:0"><div class="section-title">Não vieram? — '+dA+', '+fmtData(AG.diaAnt).substr(0,5)+'</div></div>'+
-        '<div class="info-box" style="margin-bottom:12px">Estavam na agenda e não têm comanda nesse dia. Se ela veio e a comanda só não foi lançada, toque em <strong>Ela veio</strong> (e lance a comanda).</div>'+
+        '<div class="info-box" style="margin-bottom:12px">Estavam na agenda e não têm comanda nesse dia. Se ela veio e a comanda só não foi lançada, toque em <strong>Ela veio</strong> (e lance a comanda). Avaliação não gera comanda, então o app sempre pergunta.</div>'+
         fpend.map(agCard).join('')+'<div style="margin-bottom:18px"></div>';
     }
     var itens=agMontar('conf'); AG.itens=fl.concat(itens);
@@ -2593,12 +2599,14 @@
     if(!telValido(tel)){
       tel=soDigitos(($('ag-tel-'+id)||{}).value||''); if(!telValido(tel)){ showToast('Coloque o WhatsApp com DDD'); return; }
       if(it.cli){ var cls=load(KEYS.clientes); cls.forEach(function(c){ if(c.id===it.cli.id) c.telefone=tel; }); save(KEYS.clientes,cls); }
+      else { var cft=getConfig(); cft.agendaTel=cft.agendaTel||{}; cft.agendaTel[it.g.chave]=tel; save(KEYS.config,cft); }
     }
     if(it.cli && !it.salvo){ var cf=getConfig(); cf.agendaMapa=cf.agendaMapa||{}; cf.agendaMapa[it.g.chave]=it.cli.id; save(KEYS.config,cf); }
     window.open('https://wa.me/55'+tel+'?text='+encodeURIComponent(it.texto),'_blank');
     agRegistrar(it,'enviado'); renderAgenda(); showToast((it.tipo==='falta'?'Mensagem':'Confirmação')+' de '+(primeiroNome(it.cli?it.cli.nome:it.g.nome)||'cliente')+' registrada');
   }
   function agPular(id){ var it=agItem(id); if(!it) return; agRegistrar(it,'pulado'); renderAgenda(); }
+  function agParceria(id){ var it=agItem(id); if(!it||!it.cli) return; var cf=getConfig(); cf.agendaParceria=cf.agendaParceria||{}; cf.agendaParceria[it.cli.id]=true; save(KEYS.config,cf); renderAgenda(); showToast(primeiroNome(it.cli.nome)+' não entra mais na lista de faltas'); }
   function agVeio(id){ var it=agItem(id); if(!it) return; agRegistrar(it,'veio'); renderAgenda(); showToast('Ok! Não esqueça de lançar a comanda'); }
 
   // ===== CAIXA DIÁRIO =====
@@ -3519,6 +3527,7 @@
       case 'ag-enviar': agEnviar(id); break;
       case 'ag-pular': agPular(id); break;
       case 'ag-veio': agVeio(id); break;
+      case 'ag-parceria': agParceria(id); break;
     }
   });
 
