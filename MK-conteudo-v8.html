@@ -743,7 +743,7 @@ function renderHero(){
 function lembretesHoje(){
   const d=today();const wd=d.getDay();const L=[];const d3=addDays(d,3);
   if(wd<2){L.push(['🗓️','Salão fechado','Se ainda não fez, Michele e Alison geram a semana e os roteiros com IA.']);return L;}
-  L.push(['🎬','Teve a cliente certa hoje?',`Se uma cliente combinar com um dos reels abaixo, a Pati grava e envia o álbum à Patrícia — o briefing ela vê direto no app. Gravado hoje, fica pronto até ${DIAS[d3.getDay()].toLowerCase()} ${fmtShort(d3)}.`]);
+  L.push(['🎬','Teve a cliente certa hoje?',`Se uma cliente combinar com um dos reels abaixo, a Pati grava, cria o álbum no Google Fotos com o nome da cliente e a data (ex.: "Juliana Sagaz 14/11") e envia à Patrícia — o briefing ela vê direto no app. Gravado hoje, fica pronto até ${DIAS[d3.getDay()].toLowerCase()} ${fmtShort(d3)}.`]);
   if(wd===4||wd===6)L.push(['📲','Dia de reels no feed','A Patrícia posta hoje às 18h o reels que já estiver editado — pode ser um gravado na semana passada.']);
   if(wd===4)L.push(['🖼️','Carrossel de sexta','Patrícia: carrossel pronto (tema da semana no app) e agendado para sexta, 18h.']);
   if(wd===5)L.push(['🖼️','Carrossel vai ao ar às 18h','A Patrícia posta; a Pati faz o repost nos stories.']);
@@ -952,7 +952,7 @@ function renderPlano(){
     <div class="fr"><div class="fd">Sábado</div><div class="fw"><b>Planejar a semana</b><small>Michele e Alison geram a próxima semana e os roteiros com IA</small></div></div>
     <div class="fr"><div class="fd">Ter a Sáb</div><div class="fw"><b>Stories todos os dias</b><small>Pati — 3 temas por dia + 1 da Michele falando (🎙️), na hora, sem edição</small></div></div>
     <div class="fr"><div class="fd">Cliente certa</div><div class="fw"><b>Gravar o reels</b><small>Pati grava durante o atendimento</small></div></div>
-    <div class="fr"><div class="fd">Mesmo dia</div><div class="fw"><b>Enviar à Patrícia</b><small>Pati envia o álbum · o briefing a Patrícia vê no app</small></div></div>
+    <div class="fr"><div class="fd">Mesmo dia</div><div class="fw"><b>Enviar à Patrícia</b><small>Pati cria o álbum no Google Fotos (nome da cliente + data) e envia · o briefing a Patrícia vê no app</small></div></div>
     <div class="fr"><div class="fd">Até 3 dias</div><div class="fw"><b>Edição</b><small>Patrícia edita o reels pelo briefing do app</small></div></div>
     <div class="fr"><div class="fd">Qui ou Sáb</div><div class="fw"><b>Postar o reels, 18h</b><small>Patrícia (social media) posta tudo no feed — pode ser na semana seguinte à gravação</small></div></div>
     <div class="fr"><div class="fd">Sexta</div><div class="fw"><b>Carrossel, 18h</b><small>Tema do app · Patrícia escolhe, edita (ou o Claude monta) e posta · Pati reposta nos stories</small></div></div>
